@@ -59,6 +59,14 @@ tests = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)"
 tests_no_zope = ["coverage[toml] (>=5.0.2)", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "mypy", "pytest-mypy-plugins"]
 
 [[package]]
+name = "cerberus"
+version = "1.3.4"
+description = "Lightweight, extensible schema and data validation tool for Python dictionaries."
+category = "main"
+optional = false
+python-versions = ">=2.7"
+
+[[package]]
 name = "cffi"
 version = "1.14.5"
 description = "Foreign Function Interface for Python calling C code."
@@ -306,7 +314,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.8,<3.10"
-content-hash = "c43cae617bfbada6fa9a5aa97acd442bb65e49ee3a987b86d70d41bf8e051223"
+content-hash = "2134983de771fba0cb7a86d7cf1c62d6e8808704f68580f22b7710679ebb3773"
 
 [metadata.files]
 ansible = [
@@ -326,6 +334,9 @@ atomicwrites = [
 attrs = [
     {file = "attrs-21.2.0-py2.py3-none-any.whl", hash = "sha256:149e90d6d8ac20db7a955ad60cf0e6881a3f20d37096140088356da6c716b0b1"},
     {file = "attrs-21.2.0.tar.gz", hash = "sha256:ef6aaac3ca6cd92904cdd0d83f629a15f18053ec84e6432106f7a4d04ae4f5fb"},
+]
+cerberus = [
+    {file = "Cerberus-1.3.4.tar.gz", hash = "sha256:d1b21b3954b2498d9a79edf16b3170a3ac1021df88d197dc2ce5928ba519237c"},
 ]
 cffi = [
     {file = "cffi-1.14.5-cp27-cp27m-macosx_10_9_x86_64.whl", hash = "sha256:bb89f306e5da99f4d922728ddcd6f7fcebb3241fc40edebcb7284d7514741991"},

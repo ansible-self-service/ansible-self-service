@@ -1,0 +1,18 @@
+---
+categories:
+  Misc: {}
+
+items:
+  Cowsay:
+    description: |
+      Let an ASCII cow say stuff in your terminal!
+    categories:
+      - Misc
+    image_url: https://upload.wikimedia.org/wikipedia/commons/8/80/Cowsay_Typical_Output.png
+    playbook: playbooks/cowsay.yml
+    params:
+      ansible_become_password:
+        type: secret
+        mandatory: true
+    requirements: > # any expression that we could use for a tasks "when" clause; items are ANDed
+      - ansible_distribution == 'Ubuntu'
