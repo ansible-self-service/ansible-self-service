@@ -1,7 +1,8 @@
 import pytest
 
 from ansible_self_service.core.models import RepoCategory, RepoApplicationItem
-from ansible_self_service.infrastructure.repoconfigparser import YamlRepoConfigParser, RepoConfigValidationException
+from ansible_self_service.infrastructure.yaml_repo_config_parser import YamlRepoConfigParser, \
+    RepoConfigValidationException
 
 VALID_CATEGORY_NAME = 'Misc'
 VALID_ITEM_NAME = 'Cowsay'
