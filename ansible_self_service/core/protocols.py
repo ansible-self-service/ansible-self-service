@@ -1,5 +1,8 @@
 from pathlib import Path
-from typing import Protocol, List, Callable
+from typing import Protocol, List, Callable, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from . import models
 
 
 class AppDirLocatorProtocol(Protocol):
@@ -15,7 +18,7 @@ class AppDirLocatorProtocol(Protocol):
 class RepoConfigParserProtocol(Protocol):
     """Parse a configuration file describing a sinle repo and translate it into domain object instances."""
 
-    def from_file(self, file_path) -> 'RepoConfig':
+    def from_file(self, file_path) -> 'models.RepoConfig':
         """Read a repo config file, validate it and transform it into domain models."""
 
 
@@ -44,12 +47,16 @@ class GuiProtocol(Protocol):
     def show_main_window(self):
         """Show the main windows containing an overview of all items."""
 
-    def on_event_run(self, event: 'AppEvent', run: Callable, *args, **kwargs):
+    def on_event_run(self, event: 'models.AppEvent', run: Callable, *args, **kwargs):
         """Register a callable for an event with args and kwargs."""
 
 
 class AnsibleRunnerProtocol(Protocol):
     """Run ansible-playbook."""
 
-    def apply(self, working_directory: str, relative_file_path: str, check_mode: bool = False) -> 'AnsibleRunResult':
+    def apply(
+            self, working_directory: str,
+            relative_file_path: str,
+            check_mode: bool = False
+    ) -> 'models.AnsibleRunResult':
         """Apply a single Ansible playbook."""

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import yaml
-from cerberus.validator import Validator, DocumentError
+from cerberus.validator import Validator, DocumentError  # type: ignore
 
 from ansible_self_service.core.models import RepoConfig, RepoCategory, RepoApplicationItem
 

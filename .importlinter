@@ -1,0 +1,12 @@
+[importlinter]
+root_package = ansible_self_service
+include_external_packages = True
+
+[importlinter:contract:1]
+name = The core must not import from anywhere else in the project
+type = forbidden
+source_modules =
+    ansible_self_service.core
+forbidden_modules =
+    ansible_self_service.infrastructure
+    ansible_self_service.main
