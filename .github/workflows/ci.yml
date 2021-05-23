@@ -10,6 +10,8 @@ jobs:
         poetry-version: [1.1.6]
         os: [ubuntu-20.04, macos-latest]
     runs-on: ${{ matrix.os }}
+    env:
+      TOX_PARALLEL_NO_SPINNER: 1
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
