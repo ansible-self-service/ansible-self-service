@@ -1,11 +1,11 @@
 import sys
 from pathlib import Path
+from typing import List, Callable
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol, TYPE_CHECKING
 else:
     from typing import Protocol, TYPE_CHECKING
-from typing import List, Callable
 
 if TYPE_CHECKING:
     from . import models
