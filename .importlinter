@@ -3,10 +3,10 @@ root_package = ansible_self_service
 include_external_packages = True
 
 [importlinter:contract:1]
-name = The core must not import from anywhere else in the project
-type = forbidden
-source_modules =
-    ansible_self_service.core
-forbidden_modules =
-    ansible_self_service.infrastructure
-    ansible_self_service.main
+name = Four tier layers contract
+type = layers
+layers=
+    ansible_self_service.l1_entrypoints
+    ansible_self_service.l2_infrastructure
+    ansible_self_service.l3_services
+    ansible_self_service.l4_core

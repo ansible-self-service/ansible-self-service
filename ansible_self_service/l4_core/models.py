@@ -61,17 +61,17 @@ class GitRepo:
 
 
 @dataclass(frozen=True)
-class RepoCategory:
+class AppCategory:
     """Used for categorizing self service items it the UI."""
     name: str
 
 
 @dataclass(frozen=True)
-class RepoApplicationItem:
+class App:
     """Represents a single application that can be installed, updated or removed."""
     name: str
     description: str
-    categories: List[RepoCategory]
+    categories: List[AppCategory]
 
 
 @dataclass(frozen=True)
@@ -81,8 +81,8 @@ class RepoConfig:
     This file contains information about what playbooks are available to which systems.
     """
     repo_path: str
-    categories: List[RepoCategory]
-    items: List[RepoApplicationItem]
+    categories: List[AppCategory]
+    items: List[App]
 
 
 class RepoManager:

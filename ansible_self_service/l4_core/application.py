@@ -1,5 +1,5 @@
-from ansible_self_service.core.models import AppEvent, RepoManager
-from ansible_self_service.core.protocols import GuiProtocol
+from ansible_self_service.l4_core.models import AppEvent, RepoManager
+from ansible_self_service.l4_core.protocols import GuiProtocol
 
 
 class Application:

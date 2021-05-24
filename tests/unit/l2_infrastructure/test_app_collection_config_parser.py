@@ -1,8 +1,8 @@
 import pytest
 
-from ansible_self_service.core.models import RepoCategory, RepoApplicationItem
-from ansible_self_service.infrastructure.yaml_repo_config_parser import YamlRepoConfigParser, \
-    RepoConfigValidationException
+from ansible_self_service.l2_infrastructure.app_collection_config_parser import AppCollectionConfigValidationException, \
+    YamlAppCollectionConfigParser
+from ansible_self_service.l4_core.models import AppCategory, App
 
 VALID_CATEGORY_NAME = 'Misc'
 VALID_ITEM_NAME = 'Cowsay'
@@ -35,17 +35,17 @@ this is not even YAML
 def test_parse_valid_file(tmpdir):
     config_file = tmpdir.join('self-service.yaml')
     config_file.write(VALID_CONFIG)
-    repo_config_parser = YamlRepoConfigParser()
+    repo_config_parser = YamlAppCollectionConfigParser()
     result = repo_config_parser.from_file(config_file)
-    assert result.categories == [RepoCategory(name=VALID_CATEGORY_NAME)]
-    assert result.items == [RepoApplicationItem(
-        name=VALID_ITEM_NAME, description=VALID_ITEM_DESCRIPTION, categories=[RepoCategory(name=VALID_CATEGORY_NAME)])
+    assert result.categories == [AppCategory(name=VALID_CATEGORY_NAME)]
+    assert result.items == [App(
+        name=VALID_ITEM_NAME, description=VALID_ITEM_DESCRIPTION, categories=[AppCategory(name=VALID_CATEGORY_NAME)])
     ]
 
 
 def test_parse_invalid_file(tmpdir):
     config_file = tmpdir.join('self-service.yaml')
     config_file.write(INVALID_CONFIG)
-    repo_config_parser = YamlRepoConfigParser()
-    with pytest.raises(RepoConfigValidationException):
+    repo_config_parser = YamlAppCollectionConfigParser()
+    with pytest.raises(AppCollectionConfigValidationException):
         repo_config_parser.from_file(config_file)

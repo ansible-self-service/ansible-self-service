@@ -3,10 +3,10 @@ from pathlib import Path
 import yaml
 from cerberus.validator import Validator, DocumentError  # type: ignore
 
-from ansible_self_service.core.models import RepoConfig, RepoCategory, RepoApplicationItem
+from ansible_self_service.l4_core.models import RepoConfig, AppCategory, App
 
 
-class YamlRepoConfigParser:
+class YamlAppCollectionConfigParser:
     """Parse the self-service.yaml in the repo root and translate it into domain objects."""
     CATEGORIES = 'categories'
     ITEMS = 'items'
@@ -30,16 +30,16 @@ class YamlRepoConfigParser:
         try:
             is_valid = validator.validate(config_dict)
         except DocumentError as err:
-            raise RepoConfigValidationException from err
+            raise AppCollectionConfigValidationException from err
         if not is_valid:
-            raise RepoConfigValidationException(validator.errors)
+            raise AppCollectionConfigValidationException(validator.errors)
 
         # parse & return
         return self.parse(config_dict, repo_config_file_path)
 
     def parse(self, document: dict, repo_config_file_path) -> RepoConfig:
         """Parse the dict we receive from cerberus."""
-        categories = [RepoCategory(name=category_name) for category_name, category_data in
+        categories = [AppCategory(name=category_name) for category_name, category_data in
                       document[self.CATEGORIES].items()]
         items = [self.parse_item(item_name, item_data) for item_name, item_data in
                  document[self.ITEMS].items()]
@@ -49,9 +49,9 @@ class YamlRepoConfigParser:
     @staticmethod
     def parse_item(item_name, item_data):
         """Parse a single application item into its domain model."""
-        return RepoApplicationItem(item_name, item_data['description'].strip(),
-                                   [RepoCategory(category_name) for category_name in item_data['categories']])
+        return App(item_name, item_data['description'].strip(),
+                   [AppCategory(category_name) for category_name in item_data['categories']])
 
 
-class RepoConfigValidationException(Exception):
+class AppCollectionConfigValidationException(Exception):
     """Raised when the the config file is invalid."""
