@@ -9,6 +9,13 @@ python = ">=3.7,<3.10"
 ansible = "^4.0.0"
 Cerberus = "^1.3.4"
 PySide6 = "^6.1.0"
+typer = {extras = ["all"], version = "^0.3.2"}
+validators = "^0.18.2"
+dependency-injector = "^4.34.0"
+appdirs = "^1.4.4"
+GitPython = "^3.1.18"
+giturlparse = "^0.10.0"
+tabulate = "^0.8.9"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
@@ -22,11 +29,15 @@ tox = "^3.23.1"
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
 
+[tool.pylint.master]
+extension-pkg-whitelist = ['dependency_injector']
+
 [tool.pylint.messages_control]
 max-line-length = 120
 disable = [
     "missing-module-docstring",
     "too-few-public-methods",
+    "too-many-instance-attributes",
     "cyclic-import", # causes false-positives for mypy type annotations
 ]
 

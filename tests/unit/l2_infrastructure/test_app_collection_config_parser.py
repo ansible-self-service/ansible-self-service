@@ -36,9 +36,9 @@ def test_parse_valid_file(tmpdir):
     config_file = tmpdir.join('self-service.yaml')
     config_file.write(VALID_CONFIG)
     repo_config_parser = YamlAppCollectionConfigParser()
-    result = repo_config_parser.from_file(config_file)
-    assert result.categories == [AppCategory(name=VALID_CATEGORY_NAME)]
-    assert result.items == [App(
+    categories, apps = repo_config_parser.from_file(config_file)
+    assert categories == [AppCategory(name=VALID_CATEGORY_NAME)]
+    assert apps == [App(
         name=VALID_ITEM_NAME, description=VALID_ITEM_DESCRIPTION, categories=[AppCategory(name=VALID_CATEGORY_NAME)])
     ]
 

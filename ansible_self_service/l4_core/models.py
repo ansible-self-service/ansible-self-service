@@ -1,9 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import List
+from typing import List, ClassVar, Dict, Optional, Tuple
 
-from .protocols import AppDirLocatorProtocol, GitClientProtocol
+from .exceptions import AppCollectionsAlreadyExistsException, AppCollectionsConfigDoesNotExistException, \
+    AppCollectionConfigValidationException
+from .protocols import AppDirLocatorProtocol, GitClientProtocol, AppCollectionConfigParserProtocol
 
 
 class AppEvent(Enum):
@@ -42,24 +44,6 @@ class AnsibleRunResult:
         return self.return_code != 0
 
 
-@dataclass
-class GitRepo:
-    """"Represents a Git repository on the file system."""
-
-    def __init__(self, path: Path, git_client: GitClientProtocol):
-        self.path = path
-        self._git_client = git_client
-
-    @property
-    def revision(self) -> str:
-        """Current revision hash of the Git repo."""
-
-    @property
-    def directory_name(self) -> str:
-        """Get the directory name of the Git repo."""
-        return self.path.name
-
-
 @dataclass(frozen=True)
 class AppCategory:
     """Used for categorizing self service items it the UI."""
@@ -68,45 +52,151 @@ class AppCategory:
 
 @dataclass(frozen=True)
 class App:
-    """Represents a single application that can be installed, updated or removed."""
+    """A single application that can be installed, updated or removed."""
     name: str
     description: str
     categories: List[AppCategory]
 
 
-@dataclass(frozen=True)
-class RepoConfig:
-    """Represents the self-service.yaml config file at the repo root.
+@dataclass
+class AppCollection:
+    """A collection of apps belonging to the same repository."""
+    _git_client: GitClientProtocol
+    _app_collection_config_parser: AppCollectionConfigParserProtocol
+    name: str
+    directory: Path
+    categories: Dict[str, AppCategory] = field(default_factory=dict)
+    apps: Dict[str, App] = field(default_factory=dict)
+    validation_error = None
+    _initialized: bool = False
 
-    This file contains information about what playbooks are available to which systems.
-    """
-    repo_path: str
-    categories: List[AppCategory]
-    items: List[App]
+    CONFIG_FILE_NAME: ClassVar[str] = 'self-service.yaml'
+
+    class Decorators:
+        """Nested class with decorators."""
+
+        @classmethod
+        def initialize(cls, func):
+            """Decorator checking if the catalog is initialized before calling the wrapped function."""
+
+            def wrapper(self, *args, **kwargs):
+                if not self._initialized:  # pylint: disable=W0212
+                    self.refresh()
+                    self._initialized = True  # pylint: disable=W0212
+                return func(self, *args, **kwargs)
+
+            return wrapper
+
+    def refresh(self):
+        """Read the repo config and (re-)initialize the collection."""
+        config = self.directory / self.CONFIG_FILE_NAME
+        if not config.exists():
+            raise AppCollectionsConfigDoesNotExistException()
+        try:
+            categories, apps = self._app_collection_config_parser.from_file(config)
+            self.categories = {category.name: category for category in categories}
+            self.apps = {app.name: app for app in apps}
+            self.validation_error = None
+        except AppCollectionConfigValidationException as exception:
+            self.categories = {}
+            self.apps = {}
+            self.validation_error = str(exception)
+
+    @property # type: ignore
+    @Decorators.initialize
+    def revision(self):
+        """Return the current revision of the repo."""
+        return self._git_client.get_revision(self.directory)
+
+    @property # type: ignore
+    @Decorators.initialize
+    def url(self):
+        """Extract the remote URL from the repo."""
+        return self._git_client.get_origin_url(self.directory)
+
+    @Decorators.initialize
+    def update(self, revision: Optional[str]) -> Tuple[str, str]:
+        """Update the repository.
+
+        Update to latest main/master commit if no revision is provided.
+        """
+        old_revision = self.revision
+        self._git_client.update(directory=self.directory, revision=revision)
+        new_revision = self.revision
+        return old_revision, new_revision
 
 
-class RepoManager:
-    """Keeps track of all cloned repos on the local file systems."""
-    repos: List[GitRepo]
+@dataclass
+class AppCatalog:
+    """"Contains all known apps."""
+    _config: Config
+    _git_client: GitClientProtocol
+    _app_collection_config_parser: AppCollectionConfigParserProtocol
+    _collections: dict[str, AppCollection] = field(default_factory=dict)
+    _initialized: bool = False
 
-    def __init__(self, config: Config, git_client: GitClientProtocol):
-        self._config = config
-        self._git_client = git_client
+    class Decorators:
+        """Nested class with decorators."""
 
-    def refresh_repos(self):
-        """Check the git directory for existing repos and add them to the list."""
-        self.repos = []
+        @classmethod
+        def initialize(cls, func):
+            """Decorator checking if the catalog is initialized before calling the wrapped function."""
+
+            def wrapper(self, *args, **kwargs):
+                if not self._initialized:  # pylint: disable=W0212
+                    self.refresh()
+                    self._initialized = True  # pylint: disable=W0212
+                return func(self, *args, **kwargs)
+
+            return wrapper
+
+    def refresh(self):
+        """Check the git directory for existing repos and add them to the list.py."""
+        self._collections = {}
         for child in self._config.git_directory.iterdir():
             if self._git_client.is_git_directory(child):
-                self.repos.append(GitRepo(child, self._git_client))
+                collection_name = str(child.name)
+                self._collections[collection_name] = self.create_app_collection(child, collection_name)
 
-    def add(self, url: str, name: str):  # noqa
-        """Clone a git repo and add it to the list."""
+    def get_directory_for_collection(self, name):
+        """Locate the target directory for the app repository."""
         target_dir = self._config.git_directory / name
-        self._git_client.clone_repo(url=url, target_dir=target_dir)
-        self.repos.append(GitRepo(target_dir, git_client=self._git_client))
+        return target_dir
 
-    def remove(self, repo: GitRepo):
-        """Remove a git repo from file system and the list."""
-        repo.path.unlink(missing_ok=True)
-        self.repos.remove(repo)
+    def create_app_collection(self, directory: Path, collection_name: str):
+        """Factory method for instantiating AppCollection."""
+        return AppCollection(
+            _git_client=self._git_client,
+            _app_collection_config_parser=self._app_collection_config_parser,
+            name=collection_name,
+            directory=directory
+        )
+
+    @Decorators.initialize
+    def get_collection_by_name(self, name: str) -> Optional[AppCollection]:
+        """Get an app by name or return none if none exists."""
+        return self._collections.get(name, None)
+
+    @Decorators.initialize
+    def list(self) -> List[AppCollection]:
+        """List all apps."""
+        return [value for key, value in sorted(self._collections.items())]
+
+    @Decorators.initialize
+    def add(self, name: str, url: str) -> AppCollection:
+        """Add an app collection."""
+        target_dir = self.get_directory_for_collection(name)
+        if target_dir.exists():
+            raise AppCollectionsAlreadyExistsException()
+        self._git_client.clone_repo(url, target_dir)
+        app_collection = self.create_app_collection(target_dir, name)
+        self._collections[name] = app_collection
+        return app_collection
+
+    @Decorators.initialize
+    def remove(self, name):
+        """Remove an app collection."""
+        target_dir = self.get_directory_for_collection(name)
+        if target_dir.exists():
+            self._git_client.remove_repo(target_dir)
+        self._collections.pop(name)
