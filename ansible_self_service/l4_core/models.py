@@ -132,7 +132,7 @@ class AppCatalog:
     _config: Config
     _git_client: GitClientProtocol
     _app_collection_config_parser: AppCollectionConfigParserProtocol
-    _collections: dict[str, AppCollection] = field(default_factory=dict)
+    _collections: Dict[str, AppCollection] = field(default_factory=dict)
     _initialized: bool = False
 
     class Decorators:
