@@ -4,6 +4,10 @@ version = "0.1.0"
 description = "An Ansible-based self-service application for bootstrapping client machines. "
 authors = ["Philipp Hossner <phil@deepl.com>"]
 
+[tool.poetry.scripts]
+ansible-self-service-cli = 'ansible_self_service.l1_entrypoints.cli:main'
+
+
 [tool.poetry.dependencies]
 python = ">=3.7,<3.10"
 ansible = "^4.0.0"
@@ -22,8 +26,10 @@ pytest = "^6.2"
 importlib_metadata = { version = ">=0.12", python = "<3.8" }
 pylint = "^2.8.2"
 import-linter = "^1.2.1"
-mypy = "^0.812"
+mypy = "^0.910"
 tox = "^3.23.1"
+types-PyYAML = "^5.4.10"
+types-tabulate = "^0.8.2"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -31,6 +37,13 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pylint.master]
 extension-pkg-whitelist = ['dependency_injector']
+
+[tool.mypy]
+[[tool.mypy.overrides]]
+module = [
+    "ansible.*",
+]
+ignore_missing_imports = true
 
 [tool.pylint.messages_control]
 max-line-length = 120

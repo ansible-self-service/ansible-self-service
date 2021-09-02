@@ -8,6 +8,7 @@ from ansible_self_service.l1_entrypoints.cli import app, collection, state
 from ansible_self_service.l2_infrastructure.app_collection_config_parser import YamlAppCollectionConfigParser
 from ansible_self_service.l2_infrastructure.app_dir_locator import AppdirsAppDirLocatorProtocol
 from ansible_self_service.l2_infrastructure.git_client import GitPythonGitClient
+from ansible_self_service.l3_services.app import AppService
 from ansible_self_service.l3_services.app_catalog import AppCatalogService
 from ansible_self_service.l4_core.models import AppCatalog, Config
 
@@ -42,23 +43,41 @@ class Container(containers.DeclarativeContainer):
         AppCatalogService,
         app_catalog=app_catalog,
     )
+    app_service = providers.Singleton(
+        AppService,
+        app_catalog=app_catalog,
+    )
 
 
 @inject
 def get_app_catalog_service(
-        app_catalog_service: AppCatalogService = Provide[Container.app_catalog_service]
+        app_catalog_service: AppCatalogService = Provide[Container.app_catalog_service],
 ) -> AppCatalogService:
     """Let the DI framework inject an instance of AppCatalogService and return it."""
     return app_catalog_service
+
+
+@inject
+def get_app_service(
+        app_service: AppService = Provide[Container.app_service],
+) -> AppService:
+    """Let the DI framework inject an instance of AppService and return it."""
+    return app_service
 
 
 @typer_app.callback()
 def set_state(ctx: typer.Context):  # pylint: disable=W0613
     """This runs before each command and sets the initial application state."""
     state.app_catalog_service = get_app_catalog_service()
+    state.app_service = get_app_service()
 
 
-if __name__ == "__main__":
+def main():
+    """CLI entrypoint."""
     container = Container()
     container.wire(modules=[sys.modules[__name__]])  # pylint: disable=E1101
     typer_app()
+
+
+if __name__ == "__main__":
+    main()

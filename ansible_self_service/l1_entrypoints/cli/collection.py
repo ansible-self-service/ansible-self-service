@@ -59,14 +59,14 @@ def report_update(name, new_revision, old_revision):
 
 @app.command()
 def update(name: str, revision: Optional[str] = None):
-    """Update an app."""
+    """Update an app collection."""
     old_revision, new_revision = state.app_catalog_service.update(name=name, revision=revision)
     report_update(name, new_revision, old_revision)
 
 
 @app.command()
 def update_all():
-    """Update an app."""
+    """Update all app collections."""
     collections = state.app_catalog_service.list_collections()
     for collection in collections:
         old_revision, new_revision = state.app_catalog_service.update(name=collection.name)
