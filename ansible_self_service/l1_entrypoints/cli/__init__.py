@@ -5,11 +5,14 @@ from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
 from ansible_self_service.l1_entrypoints.cli import app, collection, state
+from ansible_self_service.l2_infrastructure.ansible_runner import AnsibleRunner
 from ansible_self_service.l2_infrastructure.app_collection_config_parser import YamlAppCollectionConfigParser
 from ansible_self_service.l2_infrastructure.app_dir_locator import AppdirsAppDirLocatorProtocol
+from ansible_self_service.l2_infrastructure.app_state_persister import YamlAppStatePersister
 from ansible_self_service.l2_infrastructure.git_client import GitPythonGitClient
 from ansible_self_service.l3_services.app import AppService
 from ansible_self_service.l3_services.app_catalog import AppCatalogService
+from ansible_self_service.l4_core.factories import AppFactory
 from ansible_self_service.l4_core.models import AppCatalog, Config
 
 typer_app = typer.Typer()
@@ -29,8 +32,19 @@ class Container(containers.DeclarativeContainer):
         app_dir_locator=app_dir_locator,
     )
     git_client = providers.Singleton(GitPythonGitClient)
+    ansible_runner = providers.Singleton(AnsibleRunner)
+    app_state_persister = providers.Singleton(
+        YamlAppStatePersister,
+        config=config,
+    )
+    app_factory = providers.Singleton(
+        AppFactory,
+        app_state_persister=app_state_persister,
+        ansible_runner=ansible_runner,
+    )
     app_collection_config_parser = providers.Singleton(
-        YamlAppCollectionConfigParser
+        YamlAppCollectionConfigParser,
+        app_factory=app_factory,
     )
 
     app_catalog = providers.Singleton(

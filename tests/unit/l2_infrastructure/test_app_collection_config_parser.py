@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import pytest
+from pytest_mock import MockerFixture
 
 from ansible_self_service.l2_infrastructure.app_collection_config_parser import AppCollectionConfigValidationException, \
     YamlAppCollectionConfigParser
@@ -32,20 +35,39 @@ this is not even YAML
 '''
 
 
-def test_parse_valid_file(tmpdir):
+def create_app_collection(mocker, config_file):
+    app_collection_mock = mocker.Mock()
+    app_collection_mock.directory = Path(config_file).parent
+    app_collection_mock.config = Path(config_file)
+    return app_collection_mock
+
+
+def create_yaml_app_collection_config_parser(mocker, tmpdir, config):
     config_file = tmpdir.join('self-service.yaml')
-    config_file.write(VALID_CONFIG)
-    repo_config_parser = YamlAppCollectionConfigParser()
-    categories, apps = repo_config_parser.from_file(config_file)
+    config_file.write(config)
+    ansible_runner_stub = mocker.stub()
+    repo_config_parser = YamlAppCollectionConfigParser(ansible_runner_stub)
+    return config_file, ansible_runner_stub, repo_config_parser
+
+
+def test_parse_valid_file(tmpdir, mocker: MockerFixture):
+    config_file, ansible_runner, repo_config_parser = create_yaml_app_collection_config_parser(mocker, tmpdir,
+                                                                                               VALID_CONFIG)
+    app_collection_mock = create_app_collection(mocker, config_file)
+    categories, apps = repo_config_parser.from_file(app_collection_mock)
     assert categories == [AppCategory(name=VALID_CATEGORY_NAME)]
     assert apps == [App(
-        name=VALID_ITEM_NAME, description=VALID_ITEM_DESCRIPTION, categories=[AppCategory(name=VALID_CATEGORY_NAME)])
+        app_collection=app_collection_mock, name=VALID_ITEM_NAME, description=VALID_ITEM_DESCRIPTION,
+        categories=[AppCategory(name=VALID_CATEGORY_NAME)],
+        playbook_path=Path(config_file).parent / Path('playbooks/cowsay.yml'), _ansible_runner=ansible_runner)
     ]
 
 
-def test_parse_invalid_file(tmpdir):
-    config_file = tmpdir.join('self-service.yaml')
-    config_file.write(INVALID_CONFIG)
-    repo_config_parser = YamlAppCollectionConfigParser()
+def test_parse_invalid_file(tmpdir, mocker: MockerFixture):
+    config_file, ansible_runner, repo_config_parser = create_yaml_app_collection_config_parser(mocker, tmpdir,
+                                                                                               INVALID_CONFIG)
     with pytest.raises(AppCollectionConfigValidationException):
-        repo_config_parser.from_file(config_file)
+        app_collection_mock = mocker.Mock()
+        app_collection_mock.directory = Path(config_file).parent
+        app_collection_mock.config = Path(config_file)
+        repo_config_parser.from_file(app_collection_mock)

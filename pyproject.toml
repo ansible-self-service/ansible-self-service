@@ -30,6 +30,7 @@ mypy = "^0.910"
 tox = "^3.23.1"
 types-PyYAML = "^5.4.10"
 types-tabulate = "^0.8.2"
+pytest-mock = "^3.6.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

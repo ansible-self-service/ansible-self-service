@@ -1,9 +1,11 @@
 from dataclasses import dataclass
+from enum import Enum
 from pathlib import Path
 from typing import Optional, List
 
 from ansible_self_service.l4_core.models import App as DomainApp
 from ansible_self_service.l4_core.models import AppCollection as DomainAppCollection
+from ansible_self_service.l4_core.models import AppStatus as DomainAppStatus
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,17 @@ class AppCollection:
         )
 
 
+class AppStatus(Enum):
+    UNKNOWN = 0
+    NOT_INSTALLED = 1
+    INSTALLED = 2
+    DYSFUNCTIONAL = 3
+
+    @classmethod
+    def from_domain(cls, domain_app_status: DomainAppStatus):
+        return AppStatus(domain_app_status.value)
+
+
 @dataclass(frozen=True)
 class App:
     """Information about a single app."""
@@ -35,6 +48,7 @@ class App:
     name: str
     categories: List[str]
     collection: AppCollection
+    status: AppStatus
 
     @classmethod
     def from_domain(cls, app_collection: AppCollection, domain_app: DomainApp) -> 'App':
@@ -45,4 +59,5 @@ class App:
             name=domain_app.name,
             categories=categories_sorted,
             collection=app_collection,
+            status=AppStatus.from_domain(domain_app.state.status),
         )

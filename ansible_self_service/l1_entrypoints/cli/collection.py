@@ -11,13 +11,19 @@ app = typer.Typer()
 
 
 @app.command()
-def list():  # pylint: disable=W0622
+def list(wide=False):  # pylint: disable=W0622
     """List all registered app collections."""
     collections = state.app_catalog_service.list_collections()
-    table = [['Name', 'URL', 'Config Valid', 'Revision', 'Directory']]
+    header = ['Name', 'Config Valid', 'Revision']
+    if wide:  # in wide mode we add extra columns
+        header += ['URL', 'Directory']
+    table = [header]
     for collection in collections:
         config_valid = '✓' if collection.validation_error is None else f'✗ ({collection.validation_error})'
-        table.append([collection.name, collection.url, config_valid, collection.revision, collection.path])
+        row = [collection.name, config_valid, collection.revision[:7]]
+        if wide:
+            row += [collection.url, collection.path]
+        table.append(row)
     typer.echo(tabulate(table, headers='firstrow'))
 
 

@@ -5,7 +5,8 @@ import yaml
 from cerberus.validator import Validator, DocumentError  # type: ignore
 
 from ansible_self_service.l4_core.exceptions import AppCollectionConfigValidationException
-from ansible_self_service.l4_core.models import AppCategory, App
+from ansible_self_service.l4_core.factories import AppFactory
+from ansible_self_service.l4_core.models import AppCategory, App, AppCollection
 from ansible_self_service.l4_core.protocols import AppCollectionConfigParserProtocol
 
 
@@ -22,10 +23,13 @@ class YamlAppCollectionConfigParser(AppCollectionConfigParserProtocol):
         }
     }
 
-    def from_file(self, repo_config_file_path: Path) -> Tuple[List[AppCategory], List[App]]:
+    def __init__(self, app_factory: AppFactory):
+        self._app_factory = app_factory
+
+    def from_file(self, app_collection: AppCollection) -> Tuple[List[AppCategory], List[App]]:
         """Read a repo config file, validate it and transform it into domain models."""
         # read
-        with open('{}'.format(repo_config_file_path)) as config_file:
+        with open('{}'.format(app_collection.config)) as config_file:
             config_dict = yaml.safe_load(config_file)
 
         # validate
@@ -38,18 +42,26 @@ class YamlAppCollectionConfigParser(AppCollectionConfigParserProtocol):
             raise AppCollectionConfigValidationException(validator.errors)
 
         # parse & return
-        return self.parse(config_dict)
+        return self.parse(config_dict, app_collection)
 
-    def parse(self, document: dict) -> Tuple[List[AppCategory], List[App]]:
+    def parse(self, document: dict, app_collection: AppCollection) -> Tuple[List[AppCategory], List[App]]:
         """Parse the dict we receive from cerberus."""
         categories = [AppCategory(name=category_name) for category_name, category_data in
                       document[self.CATEGORIES].items()]
-        items = [self.parse_item(item_name, item_data) for item_name, item_data in
+        items = [self.parse_item(item_name, item_data, app_collection) for item_name, item_data in
                  document[self.ITEMS].items()]
         return categories, items
 
-    @staticmethod
-    def parse_item(item_name, item_data) -> App:
+    def parse_item(self, item_name, item_data, app_collection: AppCollection) -> App:
         """Parse a single application item into its domain model."""
-        return App(item_name, item_data['description'].strip(),
-                   [AppCategory(category_name) for category_name in item_data['categories']])
+        return self._app_factory.create_app(app_collection=app_collection, name=item_name,
+                                            description=item_data['description'].strip(),
+                                            categories=item_data['categories'],
+                                            playbook_path=self.to_absolute_path(app_collection.directory,
+                                                                                Path(item_data['playbook'])))
+
+    @staticmethod
+    def to_absolute_path(working_dir: Path, path: Path) -> Path:
+        if path.is_absolute():
+            return path
+        return working_dir / path

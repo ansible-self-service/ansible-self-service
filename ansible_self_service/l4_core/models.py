@@ -5,7 +5,9 @@ from typing import List, ClassVar, Dict, Optional, Tuple
 
 from .exceptions import AppCollectionsAlreadyExistsException, AppCollectionsConfigDoesNotExistException, \
     AppCollectionConfigValidationException
-from .protocols import AppDirLocatorProtocol, GitClientProtocol, AppCollectionConfigParserProtocol
+from .protocols import AppDirLocatorProtocol, GitClientProtocol, AppCollectionConfigParserProtocol, \
+    AnsibleRunnerProtocol
+from .utils import ObservableMixin
 
 
 class AppEvent(Enum):
@@ -16,6 +18,26 @@ class AppEvent(Enum):
     MAIN_WINDOW_READY = 1
 
 
+class AppStatus(Enum):
+    UNKNOWN = 0
+    NOT_INSTALLED = 1
+    INSTALLED = 2
+    DYSFUNCTIONAL = 3
+
+
+class AppState(ObservableMixin):
+    _observed_attrs = ('status',)
+
+    def __init__(self, status: AppStatus = AppStatus.UNKNOWN):
+        super().__init__()
+        self.status = status
+
+
+class AppPlaybookTag(Enum):
+    STATUS = 'status'
+    INSTALL = 'install'
+
+
 @dataclass
 class Config:
     """"Contains the app config."""
@@ -24,11 +46,20 @@ class Config:
         self.app_dir_locator = app_dir_locator
 
     @property
-    def git_directory(self):
+    def git_directory(self) -> Path:
         """App data directory containing all git repos with Ansible playbooks."""
         git_directory = self.app_dir_locator.get_app_data_dir() / 'git'
         git_directory.mkdir(parents=True, exist_ok=True)
         return git_directory
+
+    def app_state_file(self, app: 'App') -> Path:
+        """Path to a file for saving an app's state like whether it is installed or not."""
+        app_state_dir = self.app_dir_locator.get_app_data_dir() / app.app_collection.name
+        app_state_dir.mkdir(parents=True, exist_ok=True)
+        app_state_file = app_state_dir / app.name
+        if not app_state_file.exists():
+            app_state_file.touch()
+        return app_state_file
 
 
 @dataclass(frozen=True)
@@ -50,12 +81,24 @@ class AppCategory:
     name: str
 
 
-@dataclass(frozen=True)
-class App:
+@dataclass
+class App(ObservableMixin):
     """A single application that can be installed, updated or removed."""
+    _ansible_runner: AnsibleRunnerProtocol
+    app_collection: 'AppCollection'
     name: str
     description: str
     categories: List[AppCategory]
+    playbook_path: Path
+    state: AppState = AppState()
+
+    def refresh_status(self):
+        result = self._ansible_runner.run(
+            working_directory=self.app_collection.directory,
+            playbook_path=self.playbook_path,
+            tags=(AppPlaybookTag.STATUS.value,),
+        )
+        print(result.stdout)  # TODO: check for result programmatically
 
 
 @dataclass
@@ -87,13 +130,19 @@ class AppCollection:
 
             return wrapper
 
+    @property
+    def config(self):
+        return self.directory / self.CONFIG_FILE_NAME
+
+    def __getitem__(self, key):
+        return self.apps[key]
+
     def refresh(self):
         """Read the repo config and (re-)initialize the collection."""
-        config = self.directory / self.CONFIG_FILE_NAME
-        if not config.exists():
+        if not self.config.exists():
             raise AppCollectionsConfigDoesNotExistException()
         try:
-            categories, apps = self._app_collection_config_parser.from_file(config)
+            categories, apps = self._app_collection_config_parser.from_file(self)
             self.categories = {category.name: category for category in categories}
             self.apps = {app.name: app for app in apps}
             self.validation_error = None
@@ -102,13 +151,13 @@ class AppCollection:
             self.apps = {}
             self.validation_error = str(exception)
 
-    @property # type: ignore
+    @property  # type: ignore
     @Decorators.initialize
     def revision(self):
         """Return the current revision of the repo."""
         return self._git_client.get_revision(self.directory)
 
-    @property # type: ignore
+    @property  # type: ignore
     @Decorators.initialize
     def url(self):
         """Extract the remote URL from the repo."""
