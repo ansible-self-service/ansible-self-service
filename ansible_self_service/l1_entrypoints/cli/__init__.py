@@ -5,6 +5,7 @@ from dependency_injector import containers, providers
 from dependency_injector.wiring import Provide, inject
 
 from ansible_self_service.l1_entrypoints.cli import app, collection, state
+from ansible_self_service.l2_infrastructure.ansible_result_analyzer import JMESPathAnsibleResultAnalyzer
 from ansible_self_service.l2_infrastructure.ansible_runner import AnsibleRunner
 from ansible_self_service.l2_infrastructure.app_collection_config_parser import YamlAppCollectionConfigParser
 from ansible_self_service.l2_infrastructure.app_dir_locator import AppdirsAppDirLocatorProtocol
@@ -33,6 +34,7 @@ class Container(containers.DeclarativeContainer):
     )
     git_client = providers.Singleton(GitPythonGitClient)
     ansible_runner = providers.Singleton(AnsibleRunner)
+    ansible_result_analyzer = providers.Singleton(JMESPathAnsibleResultAnalyzer)
     app_state_persister = providers.Singleton(
         YamlAppStatePersister,
         config=config,
@@ -41,6 +43,7 @@ class Container(containers.DeclarativeContainer):
         AppFactory,
         app_state_persister=app_state_persister,
         ansible_runner=ansible_runner,
+        ansible_result_analyzer=ansible_result_analyzer,
     )
     app_collection_config_parser = providers.Singleton(
         YamlAppCollectionConfigParser,

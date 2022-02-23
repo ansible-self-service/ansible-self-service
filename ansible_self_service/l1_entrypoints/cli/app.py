@@ -31,6 +31,8 @@ def app_status_to_symbol(app_status: AppStatus):
         return '?'
     elif app_status == AppStatus.INSTALLED:
         return '✓'
+    elif app_status == AppStatus.UPGRADABLE:
+        return '↑'
     elif app_status == AppStatus.NOT_INSTALLED:
         return '✗'
     else:
@@ -45,7 +47,7 @@ def list_apps(refresh: bool = False):  # pylint: disable=W0622
     apps: List[App] = list(itertools.chain(*apps_nested))  # flatten list of lists
 
     if refresh:
-        [state.app_service.refresh_app_state(app_to_refresh) for app_to_refresh in apps]
+        apps: List[App] = [state.app_service.refresh_app_state(app_to_refresh) for app_to_refresh in apps]
 
     table = [['Name', 'Installed', 'Collection', 'Categories']]
     table_data = [[application.name, app_status_to_symbol(application.status), application.collection.name,

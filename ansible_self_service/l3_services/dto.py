@@ -34,7 +34,7 @@ class AppStatus(Enum):
     UNKNOWN = 0
     NOT_INSTALLED = 1
     INSTALLED = 2
-    DYSFUNCTIONAL = 3
+    UPGRADABLE = 3
 
     @classmethod
     def from_domain(cls, domain_app_status: DomainAppStatus):

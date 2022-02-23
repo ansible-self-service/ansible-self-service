@@ -117,3 +117,22 @@ class AnsibleRunnerProtocol(Protocol):
     def run(self, working_directory: Path, playbook_path: Path, tags=tuple(),
             check_mode: bool = False) -> 'models.AnsibleRunResult':
         """Apply a single Ansible playbook."""
+
+
+class AnsibleResultAnalyzerProtocol(Protocol):
+    """Extract information from an Ansible result object."""
+
+    SIGNAL_INSTALLED = 'ANSIBLE_SELF_SERVICE_STATUS_INSTALLED'
+    SIGNAL_NOT_INSTALLED = 'ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED'
+
+    @abstractmethod
+    def signaling_installed(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+        """Return True if the results contain ANSIBLE_SELF_SERVICE_STATUS_INSTALLED."""
+
+    @abstractmethod
+    def signaling_not_installed(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+        """Return True if the results contain ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED."""
+
+    @abstractmethod
+    def has_changes(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+        """Return True if the results contain at least one task with result "changed"."""

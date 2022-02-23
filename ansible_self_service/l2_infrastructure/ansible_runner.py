@@ -1,8 +1,9 @@
+import io
 import os
-from contextlib import contextmanager
+from contextlib import contextmanager, redirect_stdout, redirect_stderr
 from pathlib import Path
 
-from ansible_self_service.l2_infrastructure.utils import processify
+from ansible_self_service.l2_infrastructure.utils import processify, set_env
 from ansible_self_service.l4_core.models import AnsibleRunResult
 from ansible_self_service.l4_core.protocols import AnsibleRunnerProtocol
 
@@ -38,13 +39,18 @@ class AnsibleRunner(AnsibleRunnerProtocol):
         own process e.g. via multiprocessing. Then the import does not affect the main process and Ansible runs happen
         in isolation.
         """
-        with set_directory(working_directory):
-            from ansible.cli.playbook import PlaybookCLI
-            args = ['ansible-playbook', str(playbook_path)]
-            if len(tags) > 0:
-                args += ['--tags', ','.join(tags)]
-            if check_mode:
-                args.append('--check')
-            cli = PlaybookCLI(args)
-            cli.run()
-        return AnsibleRunResult('', '', 0)
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with set_env(ANSIBLE_STDOUT_CALLBACK='ansible.posix.json'):
+            with redirect_stdout(stdout):
+                with redirect_stderr(stderr):
+                    with set_directory(working_directory):
+                        from ansible.cli.playbook import PlaybookCLI
+                        args = ['ansible-playbook', str(playbook_path)]
+                        if len(tags) > 0:
+                            args += ['--tags', ','.join(tags)]
+                        if check_mode:
+                            args.append('--check')
+                        cli = PlaybookCLI(args)
+                        result = cli.run()
+        return AnsibleRunResult(stdout.getvalue(), stderr.getvalue(), result)

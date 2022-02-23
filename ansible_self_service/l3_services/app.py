@@ -15,7 +15,8 @@ class AppService:
         domain_collection = self._app_catalog.get_collection_by_name(app_collection.name)
         return [App.from_domain(app_collection, domain_app) for domain_app in domain_collection.apps.values()]
 
-    def refresh_app_state(self, app: App):
+    def refresh_app_state(self, app: App) -> App:
         domain_collection = self._app_catalog.get_collection_by_name(app.collection.name)
         domain_app = domain_collection[app.name]
         domain_app.refresh_status()
+        return App.from_domain(app.collection, domain_app)

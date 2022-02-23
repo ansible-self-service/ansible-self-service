@@ -1,12 +1,14 @@
+import json
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import cached_property
 from pathlib import Path
 from typing import List, ClassVar, Dict, Optional, Tuple
 
 from .exceptions import AppCollectionsAlreadyExistsException, AppCollectionsConfigDoesNotExistException, \
     AppCollectionConfigValidationException
 from .protocols import AppDirLocatorProtocol, GitClientProtocol, AppCollectionConfigParserProtocol, \
-    AnsibleRunnerProtocol
+    AnsibleRunnerProtocol, AnsibleResultAnalyzerProtocol
 from .utils import ObservableMixin
 
 
@@ -22,7 +24,7 @@ class AppStatus(Enum):
     UNKNOWN = 0
     NOT_INSTALLED = 1
     INSTALLED = 2
-    DYSFUNCTIONAL = 3
+    UPGRADABLE = 3
 
 
 class AppState(ObservableMixin):
@@ -72,7 +74,12 @@ class AnsibleRunResult:
     @property
     def was_successful(self):
         """True if this run has been successful."""
-        return self.return_code != 0
+        return self.return_code == 0
+
+    @cached_property
+    def data(self):
+        """Parse the structured data from stdout."""
+        return json.loads(self.stdout)
 
 
 @dataclass(frozen=True)
@@ -85,6 +92,7 @@ class AppCategory:
 class App(ObservableMixin):
     """A single application that can be installed, updated or removed."""
     _ansible_runner: AnsibleRunnerProtocol
+    _ansible_result_analyzer: AnsibleResultAnalyzerProtocol
     app_collection: 'AppCollection'
     name: str
     description: str
@@ -92,13 +100,33 @@ class App(ObservableMixin):
     playbook_path: Path
     state: AppState = AppState()
 
+    def _check_upgradable(self) -> bool:
+        result = self._ansible_runner.run(
+            working_directory=self.app_collection.directory,
+            playbook_path=self.playbook_path,
+            tags=(AppPlaybookTag.INSTALL.value,),
+            check_mode=True,
+        )
+        print(result.stdout)
+        return self._ansible_result_analyzer.has_changes(result)
+
     def refresh_status(self):
         result = self._ansible_runner.run(
             working_directory=self.app_collection.directory,
             playbook_path=self.playbook_path,
             tags=(AppPlaybookTag.STATUS.value,),
+            check_mode=True,
         )
-        print(result.stdout)  # TODO: check for result programmatically
+
+        if self._ansible_result_analyzer.signaling_not_installed(result):
+            self.state.status = AppStatus.NOT_INSTALLED
+        elif self._ansible_result_analyzer.signaling_installed(result):
+            if self._check_upgradable():
+                self.state.status = AppStatus.UPGRADABLE
+            else:
+                self.state.status = AppStatus.INSTALLED
+        else:
+            self.state.status = AppStatus.UNKNOWN
 
 
 @dataclass

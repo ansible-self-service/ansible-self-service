@@ -11,7 +11,7 @@ app = typer.Typer()
 
 
 @app.command()
-def list(wide=False):  # pylint: disable=W0622
+def list(wide: bool = False):  # pylint: disable=W0622
     """List all registered app collections."""
     collections = state.app_catalog_service.list_collections()
     header = ['Name', 'Config Valid', 'Revision']

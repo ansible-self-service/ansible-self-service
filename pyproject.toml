@@ -20,6 +20,7 @@ appdirs = "^1.4.4"
 GitPython = "^3.1.18"
 giturlparse = "^0.10.0"
 tabulate = "^0.8.9"
+jmespath = "^0.10.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
