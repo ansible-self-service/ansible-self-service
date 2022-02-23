@@ -1,11 +1,13 @@
 import itertools
 import operator
+import sys
 from typing import List
 
 import typer
 from tabulate import tabulate
 
 from ansible_self_service.l1_entrypoints.cli import state
+from ansible_self_service.l2_infrastructure.elevate import elevate
 from ansible_self_service.l3_services.dto import AppStatus, App
 
 app = typer.Typer()
@@ -39,6 +41,14 @@ def app_status_to_symbol(app_status: AppStatus):
         return '?'
 
 
+def elevate_with_current_data_dir():
+    """Rerun process with privileged user.
+
+    Keep the same data directory by providing it via CLI argument.
+    """
+    elevate(with_args=[sys.argv[0]] + ['--data-dir', state.config_service.get_app_data_dir()] + sys.argv[1:])
+
+
 @app.command(name='list')
 def list_apps(refresh: bool = False):  # pylint: disable=W0622
     """List all aps and their status."""
@@ -47,6 +57,8 @@ def list_apps(refresh: bool = False):  # pylint: disable=W0622
     apps: List[App] = list(itertools.chain(*apps_nested))  # flatten list of lists
 
     if refresh:
+        # refreshing app state requires root for ansible dry runs
+        elevate_with_current_data_dir()
         apps: List[App] = [state.app_service.refresh_app_state(app_to_refresh) for app_to_refresh in apps]
 
     table = [['Name', 'Installed', 'Collection', 'Categories']]

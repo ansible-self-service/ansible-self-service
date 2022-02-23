@@ -1,4 +1,6 @@
 import sys
+from pathlib import Path
+from typing import Optional
 
 import typer
 from dependency_injector import containers, providers
@@ -13,6 +15,7 @@ from ansible_self_service.l2_infrastructure.app_state_persister import YamlAppSt
 from ansible_self_service.l2_infrastructure.git_client import GitPythonGitClient
 from ansible_self_service.l3_services.app import AppService
 from ansible_self_service.l3_services.app_catalog import AppCatalogService
+from ansible_self_service.l3_services.config import ConfigService
 from ansible_self_service.l4_core.factories import AppFactory
 from ansible_self_service.l4_core.models import AppCatalog, Config
 
@@ -25,12 +28,14 @@ typer_app.add_typer(collection.app, name="collection")
 class Container(containers.DeclarativeContainer):
     """Dependency injection container determining how all application logic classes are instantiated."""
 
+    cli_config = config = providers.Configuration()
     app_dir_locator = providers.Singleton(
         AppdirsAppDirLocatorProtocol
     )
     config = providers.Singleton(
         Config,
         app_dir_locator=app_dir_locator,
+        override_app_data_dir=cli_config.with_custom_data_dir
     )
     git_client = providers.Singleton(GitPythonGitClient)
     ansible_runner = providers.Singleton(AnsibleRunner)
@@ -56,6 +61,10 @@ class Container(containers.DeclarativeContainer):
         _git_client=git_client,
         _app_collection_config_parser=app_collection_config_parser,
     )
+    config_service = providers.Singleton(
+        ConfigService,
+        config=config,
+    )
     app_catalog_service = providers.Singleton(
         AppCatalogService,
         app_catalog=app_catalog,
@@ -64,6 +73,14 @@ class Container(containers.DeclarativeContainer):
         AppService,
         app_catalog=app_catalog,
     )
+
+
+@inject
+def get_config_service(
+        config_service: ConfigService = Provide[Container.config_service],
+) -> ConfigService:
+    """Let the DI framework inject an instance of ConfigService and return it."""
+    return config_service
 
 
 @inject
@@ -83,16 +100,24 @@ def get_app_service(
 
 
 @typer_app.callback()
-def set_state(ctx: typer.Context):  # pylint: disable=W0613
+def set_state(ctx: typer.Context,  # pylint: disable=W0613
+              data_dir: Optional[Path] = typer.Option(
+                  default=None,
+                  help='Set data directory to this location. Will be created if it does not exist.'
+              )):
     """This runs before each command and sets the initial application state."""
+    container = Container()
+    container.cli_config.from_dict({
+        'with_custom_data_dir': Path(data_dir) if data_dir else None
+    })
+    container.wire(modules=[sys.modules[__name__]])  # pylint: disable=E1101
+    state.config_service = get_config_service()
     state.app_catalog_service = get_app_catalog_service()
     state.app_service = get_app_service()
 
 
 def main():
     """CLI entrypoint."""
-    container = Container()
-    container.wire(modules=[sys.modules[__name__]])  # pylint: disable=E1101
     typer_app()
 
 

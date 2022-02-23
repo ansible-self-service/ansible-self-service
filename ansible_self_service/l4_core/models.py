@@ -44,19 +44,20 @@ class AppPlaybookTag(Enum):
 class Config:
     """"Contains the app config."""
 
-    def __init__(self, app_dir_locator: AppDirLocatorProtocol):
+    def __init__(self, app_dir_locator: AppDirLocatorProtocol, override_app_data_dir: Path = None):
         self.app_dir_locator = app_dir_locator
+        self.app_data_dir: Path = override_app_data_dir or self.app_dir_locator.get_app_data_dir()
 
     @property
     def git_directory(self) -> Path:
         """App data directory containing all git repos with Ansible playbooks."""
-        git_directory = self.app_dir_locator.get_app_data_dir() / 'git'
+        git_directory = self.app_data_dir / 'git'
         git_directory.mkdir(parents=True, exist_ok=True)
         return git_directory
 
     def app_state_file(self, app: 'App') -> Path:
         """Path to a file for saving an app's state like whether it is installed or not."""
-        app_state_dir = self.app_dir_locator.get_app_data_dir() / app.app_collection.name
+        app_state_dir = self.app_data_dir / app.app_collection.name
         app_state_dir.mkdir(parents=True, exist_ok=True)
         app_state_file = app_state_dir / app.name
         if not app_state_file.exists():
@@ -117,7 +118,7 @@ class App(ObservableMixin):
             tags=(AppPlaybookTag.STATUS.value,),
             check_mode=True,
         )
-
+        print(result.stdout)
         if self._ansible_result_analyzer.signaling_not_installed(result):
             self.state.status = AppStatus.NOT_INSTALLED
         elif self._ansible_result_analyzer.signaling_installed(result):
@@ -230,6 +231,7 @@ class AppCatalog:
     def refresh(self):
         """Check the git directory for existing repos and add them to the list.py."""
         self._collections = {}
+        print(self._config.git_directory)
         for child in self._config.git_directory.iterdir():
             if self._git_client.is_git_directory(child):
                 collection_name = str(child.name)

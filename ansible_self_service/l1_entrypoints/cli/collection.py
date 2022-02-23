@@ -42,9 +42,10 @@ def add(url: str, name: Optional[str] = None):
     try:
         collection = state.app_catalog_service.add(name=name, url=url)
     except AppCollectionsAlreadyExistsException:
-        typer.echo(f'The app collection "{name}" already exists')
+        typer.echo(f'✓ The app collection "{name}" already exists')
         raise typer.Exit(code=1)  # pylint: disable=W0707
-    typer.echo(f'Successfully added "{name}" at revsision {collection.revision}')
+    typer.echo(f'✓ Successfully added "{name}" at revsision {collection.revision}')
+    typer.echo('⚠️Please make sure that the authors of this collection are trustworthy')
 
 
 @app.command()
