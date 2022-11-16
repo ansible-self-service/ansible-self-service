@@ -8,7 +8,7 @@ from ansible_self_service.l4_core.protocols import AppDirLocatorProtocol
 class AppdirsAppDirLocatorProtocol(AppDirLocatorProtocol):
     """Implement the AppDirLocatorProtocol with the "appdirs" library."""
 
-    APP_NAME = 'ansible-self-service'
+    APP_NAME = "ansible-self-service"
 
     def get_app_data_dir(self) -> Path:
         """Return a path to the user data directory."""

@@ -35,22 +35,36 @@ def set_directory(path: Path):
 class AnsibleRunner(AnsibleRunnerProtocol):
     """Run ansible-playbook."""
 
-    def apply(self, working_directory: str, relative_file_path: str,
-              check_mode: bool = False) -> AnsibleRunResult:
-        sources = 'localhost,'
-        context.CLIARGS = ImmutableDict(connection='smart', module_path=[],
-                                        forks=10, become=None,
-                                        become_method=None, become_user=None, check=False, diff=False)
+    def run(
+        self,
+        working_directory: Path,
+        playbook_path: Path,
+        tags=tuple(),
+        check_mode: bool = False,
+    ) -> AnsibleRunResult:
+        sources = "localhost,"
+        context.CLIARGS = ImmutableDict(
+            connection="smart",
+            module_path=[],
+            forks=10,
+            become=None,
+            tags=tags,
+            become_method=None,
+            become_user=None,
+            check=check_mode,
+            diff=True,
+        )
         loader = DataLoader()
         passwords: dict[str, str] = {}
         inventory = InventoryManager(loader=loader, sources=sources)
         variable_manager = VariableManager(loader=loader, inventory=inventory)
         pbex = PlaybookExecutor(
-            playbooks=[relative_file_path],
+            playbooks=[playbook_path],
             inventory=inventory,
-            variable_manager=variable_manager, loader=loader,
-            passwords=passwords
+            variable_manager=variable_manager,
+            loader=loader,
+            passwords=passwords,
         )
-        with set_directory(Path(working_directory)):
+        with set_directory(working_directory):
             pbex.run()
-        return AnsibleRunResult('', '', 0)
+        return AnsibleRunResult("", "", 0)

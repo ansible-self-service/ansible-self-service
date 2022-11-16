@@ -1,7 +1,9 @@
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from typing import List, Callable, Tuple, Optional
+from typing import List, Callable, Tuple, Optional, Any
+
+from .utils import ObserverProtocol
 
 if sys.version_info < (3, 8):
     from typing_extensions import Protocol, TYPE_CHECKING
@@ -28,8 +30,33 @@ class AppCollectionConfigParserProtocol(Protocol):
     """Parse a configuration file describing a single repo and translate it into domain object instances."""
 
     @abstractmethod
-    def from_file(self, repo_config_file_path: Path) -> Tuple[List['models.AppCategory'], List['models.App']]:
+    def from_file(
+        self, app_collection: "models.AppCollection"
+    ) -> Tuple[List["models.AppCategory"], List["models.App"]]:
         """Read a repo config file, validate it and transform it into domain models."""
+
+
+class AppStatePersisterProtocol(ObserverProtocol):
+    def __init__(self, config: "models.Config"):
+        self._config = config
+
+    def init_app(self, app: "models.App"):
+        """Load state and register for  future updates from an app's state."""
+        app.state = self.load(self._config.app_state_file(app))
+        app.state.attach(self)
+
+    def update(self, observable: Any, attr: str, value: Any):
+        self.save(observable, self._config.app_state_file(observable))
+
+    @abstractmethod
+    def load(self, app_state_file: Path) -> "models.AppState":
+        """Retrieve an app's state."""
+        raise NotImplementedError()
+
+    @abstractmethod
+    def save(self, app_state: "models.AppState", app_state_file: Path):
+        """Persist an app's state"""
+        raise NotImplementedError()
 
 
 class GitClientProtocol(Protocol):
@@ -68,7 +95,7 @@ class GitClientProtocol(Protocol):
 
 
 class GuiProtocol(Protocol):
-    """"Represent the graphical user interface."""
+    """ "Represent the graphical user interface."""
 
     @abstractmethod
     def loop(self):
@@ -79,7 +106,7 @@ class GuiProtocol(Protocol):
         """Show the main windows containing an overview of all items."""
 
     @abstractmethod
-    def on_event_run(self, event: 'models.AppEvent', run: Callable, *args, **kwargs):
+    def on_event_run(self, event: "models.AppEvent", run: Callable, *args, **kwargs):
         """Register a callable for an event with args and kwargs."""
 
 
@@ -87,9 +114,11 @@ class AnsibleRunnerProtocol(Protocol):
     """Run ansible-playbook."""
 
     @abstractmethod
-    def apply(
-            self, working_directory: str,
-            relative_file_path: str,
-            check_mode: bool = False
-    ) -> 'models.AnsibleRunResult':
+    def run(
+        self,
+        working_directory: Path,
+        playbook_path: Path,
+        tags=tuple(),
+        check_mode: bool = False,
+    ) -> "models.AnsibleRunResult":
         """Apply a single Ansible playbook."""

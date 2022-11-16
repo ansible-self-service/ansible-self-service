@@ -1,9 +1,12 @@
 from typing import List, Optional, Tuple
 
 from ansible_self_service.l3_services.dto import AppCollection
-from ansible_self_service.l3_services.exceptions import AppCollectionsAlreadyExistsException
-from ansible_self_service.l4_core.exceptions import \
-    AppCollectionsAlreadyExistsException as DomainAppCollectionsAlreadyExistsException
+from ansible_self_service.l3_services.exceptions import (
+    AppCollectionsAlreadyExistsException,
+)
+from ansible_self_service.l4_core.exceptions import (
+    AppCollectionsAlreadyExistsException as DomainAppCollectionsAlreadyExistsException,
+)
 from ansible_self_service.l4_core.models import AppCatalog
 
 
