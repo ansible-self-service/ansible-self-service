@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from typing import Protocol, Any, Tuple, Set
-from dataclasses import dataclass, field, Field
+from dataclasses import dataclass, field
 
 
 class ObserverProtocol(Protocol):
