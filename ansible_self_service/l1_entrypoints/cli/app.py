@@ -1,5 +1,6 @@
 import itertools
 import operator
+from typing import Optional
 
 import typer
 from tabulate import tabulate
@@ -10,7 +11,7 @@ app = typer.Typer()
 
 
 @app.command()
-def install(app_name: str, collection: str = None):
+def install(app_name: str, collection: Optional[str] = None):
     """Install an app via Ansible."""
 
 

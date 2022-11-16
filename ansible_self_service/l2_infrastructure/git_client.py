@@ -41,7 +41,7 @@ class GitPythonGitClient(GitClientProtocol):
             else:
                 raise Exception('Either "master" or "main" branch must exist in origin')
             if repo.head.is_detached:
-                if branch in repo.refs:
+                if branch in repo.refs:  # type: ignore
                     repo.git.checkout(branch)
                 else:
                     repo.git.checkout("-b", branch)

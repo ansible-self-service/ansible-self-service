@@ -2,7 +2,7 @@ from pathlib import Path
 
 import yaml
 
-from ansible_self_service.l4_core.models import AppState
+from ansible_self_service.l4_core.models import AppState, AppStatus
 from ansible_self_service.l4_core.protocols import AppStatePersisterProtocol
 
 
@@ -13,7 +13,7 @@ class YamlAppStatePersister(AppStatePersisterProtocol):
         if app_state_dict:
             status = app_state_dict["status"]
         else:
-            status = AppState.status.UNKNOWN
+            status = AppStatus.UNKNOWN
         return AppState(status=status)
 
     def save(self, app_state: AppState, app_state_file: Path):
