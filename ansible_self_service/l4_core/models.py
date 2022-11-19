@@ -5,10 +5,18 @@ from functools import cached_property
 from pathlib import Path
 from typing import List, ClassVar, Dict, Optional, Tuple
 
-from .exceptions import AppCollectionsAlreadyExistsException, AppCollectionsConfigDoesNotExistException, \
-    AppCollectionConfigValidationException
-from .protocols import AppDirLocatorProtocol, GitClientProtocol, AppCollectionConfigParserProtocol, \
-    AnsibleRunnerProtocol, AnsibleResultAnalyzerProtocol
+from .exceptions import (
+    AppCollectionsAlreadyExistsException,
+    AppCollectionsConfigDoesNotExistException,
+    AppCollectionConfigValidationException,
+)
+from .protocols import (
+    AppDirLocatorProtocol,
+    GitClientProtocol,
+    AppCollectionConfigParserProtocol,
+    AnsibleRunnerProtocol,
+    AnsibleResultAnalyzerProtocol,
+)
 from .utils import ObservableMixin
 
 
@@ -17,6 +25,7 @@ class AppEvent(Enum):
 
     Primarily used for registering callbacks with the UI.
     """
+
     MAIN_WINDOW_READY = 1
 
 
@@ -28,7 +37,7 @@ class AppStatus(Enum):
 
 
 class AppState(ObservableMixin):
-    _observed_attrs = ('status',)
+    _observed_attrs = ("status",)
 
     def __init__(self, status: AppStatus = AppStatus.UNKNOWN):
         super().__init__()
@@ -36,26 +45,32 @@ class AppState(ObservableMixin):
 
 
 class AppPlaybookTag(Enum):
-    STATUS = 'status'
-    INSTALL = 'install'
+    STATUS = "status"
+    INSTALL = "install"
 
 
 @dataclass
 class Config:
-    """"Contains the app config."""
+    """ "Contains the app config."""
 
-    def __init__(self, app_dir_locator: AppDirLocatorProtocol, override_app_data_dir: Path = None):
+    def __init__(
+        self,
+        app_dir_locator: AppDirLocatorProtocol,
+        override_app_data_dir: Optional[Path] = None,
+    ):
         self.app_dir_locator = app_dir_locator
-        self.app_data_dir: Path = override_app_data_dir or self.app_dir_locator.get_app_data_dir()
+        self.app_data_dir: Path = (
+            override_app_data_dir or self.app_dir_locator.get_app_data_dir()
+        )
 
     @property
     def git_directory(self) -> Path:
         """App data directory containing all git repos with Ansible playbooks."""
-        git_directory = self.app_data_dir / 'git'
+        git_directory = self.app_data_dir / "git"
         git_directory.mkdir(parents=True, exist_ok=True)
         return git_directory
 
-    def app_state_file(self, app: 'App') -> Path:
+    def app_state_file(self, app: "App") -> Path:
         """Path to a file for saving an app's state like whether it is installed or not."""
         app_state_dir = self.app_data_dir / app.app_collection.name
         app_state_dir.mkdir(parents=True, exist_ok=True)
@@ -68,6 +83,7 @@ class Config:
 @dataclass(frozen=True)
 class AnsibleRunResult:
     """Contains data about a completed Ansible run."""
+
     stdout: str
     stderr: str
     return_code: int
@@ -86,15 +102,17 @@ class AnsibleRunResult:
 @dataclass(frozen=True)
 class AppCategory:
     """Used for categorizing self service items it the UI."""
+
     name: str
 
 
 @dataclass
 class App(ObservableMixin):
     """A single application that can be installed, updated or removed."""
+
     _ansible_runner: AnsibleRunnerProtocol
     _ansible_result_analyzer: AnsibleResultAnalyzerProtocol
-    app_collection: 'AppCollection'
+    app_collection: "AppCollection"
     name: str
     description: str
     categories: List[AppCategory]
@@ -131,6 +149,7 @@ class App(ObservableMixin):
 @dataclass
 class AppCollection:
     """A collection of apps belonging to the same repository."""
+
     _git_client: GitClientProtocol
     _app_collection_config_parser: AppCollectionConfigParserProtocol
     name: str
@@ -140,7 +159,7 @@ class AppCollection:
     validation_error = None
     _initialized: bool = False
 
-    CONFIG_FILE_NAME: ClassVar[str] = 'self-service.yaml'
+    CONFIG_FILE_NAME: ClassVar[str] = "self-service.yaml"
 
     class Decorators:
         """Nested class with decorators."""
@@ -204,7 +223,8 @@ class AppCollection:
 
 @dataclass
 class AppCatalog:
-    """"Contains all known apps."""
+    """ "Contains all known apps."""
+
     _config: Config
     _git_client: GitClientProtocol
     _app_collection_config_parser: AppCollectionConfigParserProtocol
@@ -232,7 +252,9 @@ class AppCatalog:
         for child in self._config.git_directory.iterdir():
             if self._git_client.is_git_directory(child):
                 collection_name = str(child.name)
-                self._collections[collection_name] = self.create_app_collection(child, collection_name)
+                self._collections[collection_name] = self.create_app_collection(
+                    child, collection_name
+                )
 
     def get_directory_for_collection(self, name):
         """Locate the target directory for the app repository."""
@@ -245,7 +267,7 @@ class AppCatalog:
             _git_client=self._git_client,
             _app_collection_config_parser=self._app_collection_config_parser,
             name=collection_name,
-            directory=directory
+            directory=directory,
         )
 
     @Decorators.initialize

@@ -1,5 +1,7 @@
-from typing import Optional
+from ansible_self_service.l3_services.app import AppService
+from ansible_self_service.l3_services.app_catalog import AppCatalogService
+from ansible_self_service.l3_services.config import ConfigService
 
-app_catalog_service: 'ansible_self_service.l3_services.app.AppCatalogService'
-app_service: 'ansible_self_service.l3_services.app.AppService'
-config_service: 'ansible_self_service.l3_services.config.ConfigService'
+app_catalog_service: "AppCatalogService"
+app_service: "AppService"
+config_service: "ConfigService"

@@ -2,7 +2,7 @@ import shutil
 from pathlib import Path
 from typing import List, Optional
 
-from git import Repo, InvalidGitRepositoryError # type: ignore
+from git import Repo, InvalidGitRepositoryError  # type: ignore
 
 from ansible_self_service.l4_core.protocols import GitClientProtocol
 
@@ -34,17 +34,17 @@ class GitPythonGitClient(GitClientProtocol):
         if revision:
             repo.git.checkout(revision, force=True)
         else:
-            if 'master' in repo.remote().refs:
-                branch = 'master'
-            elif 'main' in repo.remote().refs:
-                branch = 'main'
+            if "master" in repo.remote().refs:
+                branch = "master"
+            elif "main" in repo.remote().refs:
+                branch = "main"
             else:
                 raise Exception('Either "master" or "main" branch must exist in origin')
             if repo.head.is_detached:
-                if branch in repo.refs:
+                if branch in repo.refs: # type: ignore
                     repo.git.checkout(branch)
                 else:
-                    repo.git.checkout('-b', branch)
+                    repo.git.checkout("-b", branch)
             if not repo.head.ref.tracking_branch():
                 repo.head.ref.set_tracking_branch(repo.remote().refs[branch])
             repo.remote().pull(force=True)

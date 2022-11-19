@@ -19,7 +19,7 @@ class AppCollection:
     validation_error: Optional[str]
 
     @classmethod
-    def from_domain(cls, domain_app_collection: DomainAppCollection) -> 'AppCollection':
+    def from_domain(cls, domain_app_collection: DomainAppCollection) -> "AppCollection":
         """Parse a domain app collection and instantiate a DTO AppCollection with it."""
         return AppCollection(
             name=domain_app_collection.name,
@@ -51,9 +51,11 @@ class App:
     status: AppStatus
 
     @classmethod
-    def from_domain(cls, app_collection: AppCollection, domain_app: DomainApp) -> 'App':
+    def from_domain(cls, app_collection: AppCollection, domain_app: DomainApp) -> "App":
         """Parse a domain app and instantiate a DTO App with it."""
-        categories_sorted = [domain_category.name for domain_category in domain_app.categories]
+        categories_sorted = [
+            domain_category.name for domain_category in domain_app.categories
+        ]
         categories_sorted.sort()
         return App(
             name=domain_app.name,

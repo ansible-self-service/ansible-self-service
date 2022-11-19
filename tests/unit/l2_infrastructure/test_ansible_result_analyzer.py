@@ -1,6 +1,8 @@
 import json
 
-from ansible_self_service.l2_infrastructure.ansible_result_analyzer import JMESPathAnsibleResultAnalyzer
+from ansible_self_service.l2_infrastructure.ansible_result_analyzer import (
+    JMESPathAnsibleResultAnalyzer,
+)
 
 ANSIBLE_RESULT_NOT_INSTALLED = """
 {

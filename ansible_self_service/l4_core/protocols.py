@@ -30,14 +30,14 @@ class AppCollectionConfigParserProtocol(Protocol):
     """Parse a configuration file describing a single repo and translate it into domain object instances."""
 
     @abstractmethod
-    def from_file(self, app_collection: 'models.AppCollection') -> Tuple[
-        List['models.AppCategory'], List['models.App']]:
+    def from_file(
+        self, app_collection: "models.AppCollection"
+    ) -> Tuple[List["models.AppCategory"], List["models.App"]]:
         """Read a repo config file, validate it and transform it into domain models."""
 
 
 class AppStatePersisterProtocol(ObserverProtocol):
-
-    def __init__(self, config: 'models.Config'):
+    def __init__(self, config: "models.Config"):
         self._config = config
 
     def init_app(self, app):
@@ -49,12 +49,12 @@ class AppStatePersisterProtocol(ObserverProtocol):
         self.save(observable, self._config.app_state_file(observable))
 
     @abstractmethod
-    def load(self, app_state_file: Path) -> 'models.AppState':
+    def load(self, app_state_file: Path) -> "models.AppState":
         """Retrieve an app's state."""
         raise NotImplementedError()
 
     @abstractmethod
-    def save(self, app_state: 'models.AppState', app_state_file: Path):
+    def save(self, app_state: "models.AppState", app_state_file: Path):
         """Persist an app's state"""
         raise NotImplementedError()
 
@@ -95,7 +95,7 @@ class GitClientProtocol(Protocol):
 
 
 class GuiProtocol(Protocol):
-    """"Represent the graphical user interface."""
+    """ "Represent the graphical user interface."""
 
     @abstractmethod
     def loop(self):
@@ -106,7 +106,7 @@ class GuiProtocol(Protocol):
         """Show the main windows containing an overview of all items."""
 
     @abstractmethod
-    def on_event_run(self, event: 'models.AppEvent', run: Callable, *args, **kwargs):
+    def on_event_run(self, event: "models.AppEvent", run: Callable, *args, **kwargs):
         """Register a callable for an event with args and kwargs."""
 
 
@@ -114,25 +114,34 @@ class AnsibleRunnerProtocol(Protocol):
     """Run ansible-playbook."""
 
     @abstractmethod
-    def run(self, working_directory: Path, playbook_path: Path, tags=tuple(),
-            check_mode: bool = False) -> 'models.AnsibleRunResult':
+    def run(
+        self,
+        working_directory: Path,
+        playbook_path: Path,
+        tags=tuple(),
+        check_mode: bool = False,
+    ) -> "models.AnsibleRunResult":
         """Apply a single Ansible playbook."""
 
 
 class AnsibleResultAnalyzerProtocol(Protocol):
     """Extract information from an Ansible result object."""
 
-    SIGNAL_INSTALLED: str = 'ANSIBLE_SELF_SERVICE_STATUS_INSTALLED'
-    SIGNAL_NOT_INSTALLED: str = 'ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED'
+    SIGNAL_INSTALLED: str = "ANSIBLE_SELF_SERVICE_STATUS_INSTALLED"
+    SIGNAL_NOT_INSTALLED: str = "ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED"
 
     @abstractmethod
-    def signaling_installed(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+    def signaling_installed(
+        self, ansible_run_result: "models.AnsibleRunResult"
+    ) -> bool:
         """Return True if the results contain ANSIBLE_SELF_SERVICE_STATUS_INSTALLED."""
 
     @abstractmethod
-    def signaling_not_installed(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+    def signaling_not_installed(
+        self, ansible_run_result: "models.AnsibleRunResult"
+    ) -> bool:
         """Return True if the results contain ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED."""
 
     @abstractmethod
-    def has_changes(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:
+    def has_changes(self, ansible_run_result: "models.AnsibleRunResult") -> bool:
         """Return True if the results contain at least one task with result "changed"."""
