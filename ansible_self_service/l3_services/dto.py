@@ -31,10 +31,10 @@ class AppCollection:
 
 
 class AppStatus(Enum):
-    UNKNOWN = 0
-    NOT_INSTALLED = 1
-    INSTALLED = 2
-    UPGRADABLE = 3
+    UNKNOWN = DomainAppStatus.UNKNOWN.value
+    NOT_INSTALLED = DomainAppStatus.NOT_INSTALLED.value
+    INSTALLED = DomainAppStatus.INSTALLED.value
+    UPGRADABLE = DomainAppStatus.UPGRADABLE.value
 
     @classmethod
     def from_domain(cls, domain_app_status: DomainAppStatus):

@@ -11,7 +11,7 @@ class ObserverProtocol(Protocol):
 class ObservableMixin:
     _observed_attrs: Tuple = tuple()
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self):
         self.__observers = set()
 
     def attach(self, observer: ObserverProtocol):

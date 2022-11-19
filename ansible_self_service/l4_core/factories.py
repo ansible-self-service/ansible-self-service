@@ -21,7 +21,7 @@ class AppFactory:
         self._ansible_runner = ansible_runner
         self._ansible_result_analyzer = ansible_result_analyzer
 
-    def create_app(
+    def create_app(  # pylint: disable=too-many-arguments
         self,
         app_collection: AppCollection,
         name: str,
