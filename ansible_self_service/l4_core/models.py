@@ -108,7 +108,6 @@ class App(ObservableMixin):
             tags=(AppPlaybookTag.INSTALL.value,),
             check_mode=True,
         )
-        print(result.stdout)
         return self._ansible_result_analyzer.has_changes(result)
 
     def refresh_status(self):
@@ -118,7 +117,6 @@ class App(ObservableMixin):
             tags=(AppPlaybookTag.STATUS.value,),
             check_mode=True,
         )
-        print(result.stdout)
         if self._ansible_result_analyzer.signaling_not_installed(result):
             self.state.status = AppStatus.NOT_INSTALLED
         elif self._ansible_result_analyzer.signaling_installed(result):
@@ -231,7 +229,6 @@ class AppCatalog:
     def refresh(self):
         """Check the git directory for existing repos and add them to the list.py."""
         self._collections = {}
-        print(self._config.git_directory)
         for child in self._config.git_directory.iterdir():
             if self._git_client.is_git_directory(child):
                 collection_name = str(child.name)

@@ -122,8 +122,8 @@ class AnsibleRunnerProtocol(Protocol):
 class AnsibleResultAnalyzerProtocol(Protocol):
     """Extract information from an Ansible result object."""
 
-    SIGNAL_INSTALLED = 'ANSIBLE_SELF_SERVICE_STATUS_INSTALLED'
-    SIGNAL_NOT_INSTALLED = 'ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED'
+    SIGNAL_INSTALLED: str = 'ANSIBLE_SELF_SERVICE_STATUS_INSTALLED'
+    SIGNAL_NOT_INSTALLED: str = 'ANSIBLE_SELF_SERVICE_STATUS_NOT_INSTALLED'
 
     @abstractmethod
     def signaling_installed(self, ansible_run_result: 'models.AnsibleRunResult') -> bool:

@@ -8,7 +8,7 @@ from typing import Dict
 
 
 @contextlib.contextmanager
-def set_env(**environ: Dict[str, str]):
+def set_env(**environ: str):
     """
     Temporarily set the process environment variables.
 

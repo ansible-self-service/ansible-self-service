@@ -30,6 +30,13 @@ def set_directory(path: Path):
 class AnsibleRunner(AnsibleRunnerProtocol):
     """Run ansible-playbook."""
 
+    @staticmethod
+    def __clear_ansible_env_vars():
+        """Unset ANSIBLE_XXX env vars, so they do not interfere with our run."""
+        for env_var in os.environ:
+            if env_var.startswith('ANSIBLE_'):
+                del os.environ[env_var]
+
     @processify
     def run(self, working_directory: Path, playbook_path: Path, tags=tuple(),
             check_mode: bool = False) -> AnsibleRunResult:
@@ -39,6 +46,7 @@ class AnsibleRunner(AnsibleRunnerProtocol):
         own process e.g. via multiprocessing. Then the import does not affect the main process and Ansible runs happen
         in isolation.
         """
+        self.__clear_ansible_env_vars()
         stdout = io.StringIO()
         stderr = io.StringIO()
         with set_env(ANSIBLE_STDOUT_CALLBACK='ansible.posix.json'):

@@ -1,13 +1,16 @@
 import itertools
 import operator
+import os
 import sys
+import time
 from typing import List
 
+import click_spinner
 import typer
 from tabulate import tabulate
 
 from ansible_self_service.l1_entrypoints.cli import state
-from ansible_self_service.l2_infrastructure.elevate import elevate
+from ansible_self_service.l2_infrastructure.elevate import elevate, is_root
 from ansible_self_service.l3_services.dto import AppStatus, App
 
 app = typer.Typer()
@@ -46,7 +49,12 @@ def elevate_with_current_data_dir():
 
     Keep the same data directory by providing it via CLI argument.
     """
-    elevate(with_args=[sys.argv[0]] + ['--data-dir', state.config_service.get_app_data_dir()] + sys.argv[1:])
+    position_of_this_subcommand = sys.argv.index('app')
+    args = sys.argv[:position_of_this_subcommand] + \
+           ['--data-dir', str(state.config_service.get_app_data_dir())] + \
+           ['--chdir', os.getcwd()] + \
+           sys.argv[position_of_this_subcommand:]
+    elevate(with_args=args)
 
 
 @app.command(name='list')
@@ -58,16 +66,26 @@ def list_apps(refresh: bool = False):  # pylint: disable=W0622
 
     if refresh:
         # refreshing app state requires root for ansible dry runs
-        elevate_with_current_data_dir()
-        apps: List[App] = [state.app_service.refresh_app_state(app_to_refresh) for app_to_refresh in apps]
+        #if not is_root():
+        #    typer.echo('🚀 Elevating privileges for app refresh...')
+        #    elevate_with_current_data_dir()
+        typer.echo('⟳  Refreshing app state...')
+        with click_spinner.spinner():
+            apps: List[App] = [state.app_service.refresh_app_state(app_to_refresh) for app_to_refresh in apps]
+        typer.echo("\r ")
 
-    table = [['Name', 'Installed', 'Collection', 'Categories']]
+    table = [['Name', 'Status', 'Collection', 'Categories']]
     table_data = [[application.name, app_status_to_symbol(application.status), application.collection.name,
                    ','.join(application.categories)]
                   for application in apps]
     table_data = sorted(table_data, key=operator.itemgetter(0))  # sort by name
     table += table_data
     typer.echo(tabulate(table, headers='firstrow'))
+    typer.echo('')
+    typer.echo(f"{app_status_to_symbol(AppStatus.INSTALLED)} installed, "
+               f"{app_status_to_symbol(AppStatus.UPGRADABLE)} can be upgraded, "
+               f"{app_status_to_symbol(AppStatus.NOT_INSTALLED)} not installed, "
+               f"{app_status_to_symbol(AppStatus.UNKNOWN)} unknown")
     # pylint: skip-file
     # TODO: run playbook with tag status to get status (not installed, installed, dysfunctional) and
     #  tag install to install

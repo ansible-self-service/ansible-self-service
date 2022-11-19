@@ -61,3 +61,6 @@ class App:
             collection=app_collection,
             status=AppStatus.from_domain(domain_app.state.status),
         )
+
+    def __str__(self):
+        return self.name

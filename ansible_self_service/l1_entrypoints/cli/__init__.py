@@ -1,3 +1,4 @@
+import os
 import sys
 from pathlib import Path
 from typing import Optional
@@ -104,8 +105,15 @@ def set_state(ctx: typer.Context,  # pylint: disable=W0613
               data_dir: Optional[Path] = typer.Option(
                   default=None,
                   help='Set data directory to this location. Will be created if it does not exist.'
-              )):
+              ),
+              chdir: Optional[Path] = typer.Option(
+                  default=None,
+                  help='Set current working directory to this path. Only needed for privilege escalation.'
+              ),
+              ):
     """This runs before each command and sets the initial application state."""
+    if chdir:
+        os.chdir(chdir)
     container = Container()
     container.cli_config.from_dict({
         'with_custom_data_dir': Path(data_dir) if data_dir else None
