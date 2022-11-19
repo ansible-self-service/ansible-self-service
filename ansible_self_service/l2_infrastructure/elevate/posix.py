@@ -20,7 +20,7 @@ def quote_applescript(string):
         '"': '\\"',
         "\\": "\\\\",
     }
-    return '"%s"' % "".join(charmap.get(char, char) for char in string)
+    return f'"{"".join(charmap.get(char, char) for char in string)}"'
 
 
 def elevate(show_console=True, graphical=True, with_args=sys.argv):
@@ -36,10 +36,9 @@ def elevate(show_console=True, graphical=True, with_args=sys.argv):
                 [
                     "osascript",
                     "-e",
-                    "do shell script %s "
+                    f"do shell script {quote_applescript(quote_shell(args))} "
                     "with administrator privileges "
-                    "without altering line endings"
-                    % quote_applescript(quote_shell(args)),
+                    "without altering line endings",
                 ]
             )
 
@@ -53,6 +52,6 @@ def elevate(show_console=True, graphical=True, with_args=sys.argv):
     for args in commands:
         try:
             os.execlp(args[0], *args)
-        except OSError as e:
-            if e.errno != errno.ENOENT or args[0] == "sudo":
+        except OSError as err:
+            if err.errno != errno.ENOENT or args[0] == "sudo":
                 raise

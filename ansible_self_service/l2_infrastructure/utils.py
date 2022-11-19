@@ -4,7 +4,6 @@ import sys
 import traceback
 from functools import wraps
 from multiprocessing import Process, Queue
-from typing import Dict
 
 
 @contextlib.contextmanager
@@ -39,17 +38,17 @@ def processify(func):
     run in parallel.
     """
 
-    def process_func(q, *args, **kwargs):
+    def process_func(queue, *args, **kwargs):
         try:
             ret = func(*args, **kwargs)
-        except Exception:
-            ex_type, ex_value, tb = sys.exc_info()
-            error = ex_type, ex_value, "".join(traceback.format_tb(tb))
+        except Exception:  # pylint: disable=broad-except
+            ex_type, ex_value, trace_back = sys.exc_info()
+            error = ex_type, ex_value, "".join(traceback.format_tb(trace_back))
             ret = None
         else:
             error = None
 
-        q.put((ret, error))
+        queue.put((ret, error))
 
     # register original function with different name
     # in sys.modules so it is pickable
@@ -58,15 +57,17 @@ def processify(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-        q = Queue()
-        p = Process(target=process_func, args=[q] + list(args), kwargs=kwargs)
-        p.start()
-        ret, error = q.get()
-        p.join()
+        queue = Queue()
+        process = Process(
+            target=process_func, args=(queue,) + tuple(args), kwargs=kwargs
+        )
+        process.start()
+        ret, error = queue.get()
+        process.join()
 
         if error:
             ex_type, ex_value, tb_str = error
-            message = "%s (in subprocess)\n%s" % (ex_value.message, tb_str)
+            message = f"{ex_value.message} (in subprocess)\n{tb_str}"
             raise ex_type(message)
 
         return ret

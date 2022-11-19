@@ -27,7 +27,7 @@ class YamlAppCollectionConfigParser(AppCollectionConfigParserProtocol):
     ) -> Tuple[List[AppCategory], List[App]]:
         """Read a repo config file, validate it and transform it into domain models."""
         # read
-        with open("{}".format(app_collection.config)) as config_file:
+        with open(app_collection.config, encoding="utf-8") as config_file:
             config_dict = yaml.safe_load(config_file)
 
         # validate

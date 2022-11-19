@@ -1,6 +1,6 @@
 import jmespath
 
-from ansible_self_service.l4_core import models
+from ansible_self_service.l4_core import models  # pylint: disable=unused-import
 from ansible_self_service.l4_core.protocols import AnsibleResultAnalyzerProtocol
 
 

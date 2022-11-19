@@ -49,12 +49,12 @@ class AppStatePersisterProtocol(ObserverProtocol):
         self.save(observable, self._config.app_state_file(observable))
 
     @abstractmethod
-    def load(self, app_state_file: Path) -> "models.AppState":
+    def load(self, app_state_file_path: Path) -> "models.AppState":
         """Retrieve an app's state."""
         raise NotImplementedError()
 
     @abstractmethod
-    def save(self, app_state: "models.AppState", app_state_file: Path):
+    def save(self, app_state: "models.AppState", app_state_file_path: Path):
         """Persist an app's state"""
         raise NotImplementedError()
 

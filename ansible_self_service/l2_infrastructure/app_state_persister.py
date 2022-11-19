@@ -9,13 +9,13 @@ from ansible_self_service.l4_core.protocols import AppStatePersisterProtocol
 
 class YamlAppStatePersister(AppStatePersisterProtocol):
     def load(self, app_state_file_path: Path) -> AppState:
-        with open(app_state_file_path, "r") as app_state_file:
+        with open(app_state_file_path, "r", encoding="utf-8") as app_state_file:
             app_state_dict: Dict = yaml.safe_load(app_state_file) or {}
         status = app_state_dict.get("status", AppStatus.UNKNOWN)
         return AppState(status=status)
 
-    def save(self, app_state: AppState, app_state_file: Path):
-        with open(app_state_file, "w") as outfile:
+    def save(self, app_state: AppState, app_state_file_path: Path):
+        with open(app_state_file_path, "w", encoding="utf-8") as outfile:
             yaml.dump(
                 {
                     "status": app_state.status,

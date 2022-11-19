@@ -58,7 +58,9 @@ class AnsibleRunner(AnsibleRunnerProtocol):
             with redirect_stdout(stdout):
                 with redirect_stderr(stderr):
                     with set_directory(working_directory):
-                        from ansible.cli.playbook import PlaybookCLI
+                        from ansible.cli.playbook import (  # pylint: disable=import-outside-toplevel
+                            PlaybookCLI,
+                        )
 
                         args = ["ansible-playbook", str(playbook_path)]
                         if len(tags) > 0:
