@@ -5,7 +5,7 @@ from enum import Enum
 try:
     from functools import cached_property
 except ImportError:
-    cached_property = property
+    cached_property = property  # type: ignore # pylint: disable=invalid-name
 from pathlib import Path
 from typing import List, ClassVar, Dict, Optional, Tuple
 
@@ -105,7 +105,7 @@ class AnsibleRunResult:
 
 @dataclass(frozen=True)
 class AppCategory:
-    """Used for categorizing self service items it the UI."""
+    """Used for categorizing self-service items it the UI."""
 
     name: str
 
