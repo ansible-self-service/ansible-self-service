@@ -1,5 +1,10 @@
+import sys
 from abc import abstractmethod
-from typing import Protocol, Any, Tuple
+
+if sys.version_info < (3, 8):
+    from typing_extensions import Protocol, Any, Tuple
+else:
+    from typing import Protocol, Any, Tuple
 
 
 class ObserverProtocol(Protocol):

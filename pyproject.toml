@@ -24,6 +24,7 @@ jmespath = "^1.0.1"
 click-spinner = "^0.1.10"
 types-jmespath = "^1.0.2"
 types-click-spinner = "^0.1.13"
+typing-extensions = "^4.4.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2"
