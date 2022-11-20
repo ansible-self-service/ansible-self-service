@@ -1,7 +1,11 @@
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from functools import cached_property
+
+try:
+    from functools import cached_property
+except ImportError:
+    cached_property = property
 from pathlib import Path
 from typing import List, ClassVar, Dict, Optional, Tuple
 
