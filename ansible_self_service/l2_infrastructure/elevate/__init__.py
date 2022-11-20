@@ -22,10 +22,14 @@ def elevate(show_console=True, graphical=True, with_args=None):
     if script_path.exists() and not script_path.is_absolute():
         with_args[0] = str(script_path.resolve())
     if sys.platform.startswith("win"):
-        from .windows import elevate
+        from .windows import (  # pylint: disable=(import-outside-toplevel
+            elevate as elevate_impl,
+        )
     else:
-        from .posix import elevate
-    elevate(show_console, graphical, with_args)
+        from .posix import (  # pylint: disable=(import-outside-toplevel
+            elevate as elevate_impl,
+        )
+    elevate_impl(show_console, graphical, with_args)
 
 
 def is_root():

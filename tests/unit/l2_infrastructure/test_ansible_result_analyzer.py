@@ -1,8 +1,11 @@
 import json
 
+import pytest
+
 from ansible_self_service.l2_infrastructure.ansible_result_analyzer import (
     JMESPathAnsibleResultAnalyzer,
 )
+from ansible_self_service.l4_core.protocols import LoggerProtocol
 
 ANSIBLE_RESULT_NOT_INSTALLED = """
 {
@@ -255,17 +258,36 @@ ANSIBLE_RESULT_INSTALLED = """
 """
 
 
-def test_not_installed(mocker):
+class MockLogger(LoggerProtocol):
+    def debug(self, msg: str):
+        pass
+
+    def info(self, msg: str):
+        pass
+
+    def warning(self, msg: str):
+        pass
+
+    def error(self, msg: str):
+        pass
+
+
+@pytest.fixture
+def logger():
+    return MockLogger()
+
+
+def test_not_installed(mocker, logger):
     ansible_result_mock = mocker.Mock()
     ansible_result_mock.data = json.loads(ANSIBLE_RESULT_NOT_INSTALLED)
-    analyzer = JMESPathAnsibleResultAnalyzer()
+    analyzer = JMESPathAnsibleResultAnalyzer(logger)
     assert analyzer.signaling_not_installed(ansible_result_mock) is True
     assert analyzer.signaling_installed(ansible_result_mock) is False
 
 
-def test_installed(mocker):
+def test_installed(mocker, logger):
     ansible_result_mock = mocker.Mock()
     ansible_result_mock.data = json.loads(ANSIBLE_RESULT_INSTALLED)
-    analyzer = JMESPathAnsibleResultAnalyzer()
+    analyzer = JMESPathAnsibleResultAnalyzer(logger)
     assert analyzer.signaling_not_installed(ansible_result_mock) is False
     assert analyzer.signaling_installed(ansible_result_mock) is True

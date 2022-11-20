@@ -145,3 +145,21 @@ class AnsibleResultAnalyzerProtocol(Protocol):
     @abstractmethod
     def has_changes(self, ansible_run_result: "models.AnsibleRunResult") -> bool:
         """Return True if the results contain at least one task with result "changed"."""
+
+
+class LoggerProtocol(Protocol):
+    @abstractmethod
+    def debug(self, msg: str):
+        """Log the message on debug level."""
+
+    @abstractmethod
+    def info(self, msg: str):
+        """Log the message on info level."""
+
+    @abstractmethod
+    def warning(self, msg: str):
+        """Log the message on warning level."""
+
+    @abstractmethod
+    def error(self, msg: str):
+        """Log the message on warning level."""

@@ -23,7 +23,5 @@ class ObservableMixin:
     def __setattr__(self, key, value):
         super().__setattr__(key, value)
         if key in self._observed_attrs and hasattr(self, "__observers"):
-            [
+            for observer in self.__observers:
                 observer.update(observable=self, attr=key, value=value)
-                for observer in self.__observers
-            ]

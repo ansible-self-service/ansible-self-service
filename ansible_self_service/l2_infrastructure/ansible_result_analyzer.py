@@ -1,13 +1,19 @@
 import jmespath
 
 from ansible_self_service.l4_core import models  # pylint: disable=unused-import
-from ansible_self_service.l4_core.protocols import AnsibleResultAnalyzerProtocol
+from ansible_self_service.l4_core.protocols import (
+    AnsibleResultAnalyzerProtocol,
+    LoggerProtocol,
+)
 
 
 class JMESPathAnsibleResultAnalyzer(AnsibleResultAnalyzerProtocol):
     JMESPATH_QUERY_NUMBER_OF_TASKS_CONTAINING_MESSAGE = (
         "length(plays[].tasks[?hosts.localhost.msg=='{msg}'][])"
     )
+
+    def __init__(self, logger: LoggerProtocol):
+        self._logger = logger
 
     def _get_number_of_tasks_with_message(self, msg: str, data: dict):
         query = self.JMESPATH_QUERY_NUMBER_OF_TASKS_CONTAINING_MESSAGE.format(msg=msg)
@@ -35,6 +41,6 @@ class JMESPathAnsibleResultAnalyzer(AnsibleResultAnalyzerProtocol):
                 int(jmespath.search("stats.localhost.changed", ansible_run_result.data))
                 > 0
             )
-        except TypeError:
-            # TODO: log error
+        except TypeError as err:
+            self._logger.error(f"Could not parse Ansible result: {err}")
             return False

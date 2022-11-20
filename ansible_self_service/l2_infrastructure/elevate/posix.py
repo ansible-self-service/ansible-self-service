@@ -23,7 +23,9 @@ def quote_applescript(string):
     return f'"{"".join(charmap.get(char, char) for char in string)}"'
 
 
-def elevate(show_console=True, graphical=True, with_args=sys.argv):
+def elevate(_=True, graphical=True, with_args=None):
+    if with_args is None:
+        with_args = sys.argv
     if os.getuid() == 0:
         return
 

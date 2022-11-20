@@ -22,6 +22,7 @@ from ansible_self_service.l2_infrastructure.app_state_persister import (
     YamlAppStatePersister,
 )
 from ansible_self_service.l2_infrastructure.git_client import GitPythonGitClient
+from ansible_self_service.l2_infrastructure.logger import BasicLogger
 from ansible_self_service.l3_services.app import AppService
 from ansible_self_service.l3_services.app_catalog import AppCatalogService
 from ansible_self_service.l3_services.config import ConfigService
@@ -38,15 +39,19 @@ class Container(containers.DeclarativeContainer):
     """Dependency injection container determining how all application logic classes are instantiated."""
 
     cli_config = providers.Configuration()
+    logger = providers.Singleton(BasicLogger)
     app_dir_locator = providers.Singleton(AppdirsAppDirLocatorProtocol)
     config = providers.Singleton(
         Config,
         app_dir_locator=app_dir_locator,
-        override_app_data_dir=cli_config.with_custom_data_dir,
+        override_app_data_dir=cli_config.with_custom_data_dir,  # pylint: disable=no-member
     )
     git_client = providers.Singleton(GitPythonGitClient)
     ansible_runner = providers.Singleton(AnsibleRunner)
-    ansible_result_analyzer = providers.Singleton(JMESPathAnsibleResultAnalyzer)
+    ansible_result_analyzer = providers.Singleton(
+        JMESPathAnsibleResultAnalyzer,
+        logger=logger,
+    )
     app_state_persister = providers.Singleton(
         YamlAppStatePersister,
         config=config,

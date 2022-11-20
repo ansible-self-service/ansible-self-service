@@ -1,4 +1,5 @@
 from pathlib import Path
+from unittest.mock import MagicMock
 
 import pytest
 from pytest_mock import MockerFixture
@@ -7,7 +8,7 @@ from ansible_self_service.l2_infrastructure.app_collection_config_parser import 
     AppCollectionConfigValidationException,
     YamlAppCollectionConfigParser,
 )
-from ansible_self_service.l4_core.models import AppCategory, App
+from ansible_self_service.l4_core.models import AppCategory
 
 VALID_CATEGORY_NAME = "Misc"
 VALID_ITEM_NAME = "Cowsay"
@@ -47,36 +48,31 @@ def create_app_collection(mocker, config_file):
 def create_yaml_app_collection_config_parser(mocker, tmpdir, config):
     config_file = tmpdir.join("self-service.yaml")
     config_file.write(config)
+    app_stub = mocker.stub()
     ansible_runner_stub = mocker.stub()
-    repo_config_parser = YamlAppCollectionConfigParser(ansible_runner_stub)
-    return config_file, ansible_runner_stub, repo_config_parser
+    ansible_runner_stub.create_app = MagicMock(return_value=app_stub)
+    app_collection_config_parser = YamlAppCollectionConfigParser(ansible_runner_stub)
+    return config_file, ansible_runner_stub, app_stub, app_collection_config_parser
 
 
 def test_parse_valid_file(tmpdir, mocker: MockerFixture):
     (
         config_file,
         ansible_runner,
-        repo_config_parser,
+        app_stub,
+        app_collection_config_parser,
     ) = create_yaml_app_collection_config_parser(mocker, tmpdir, VALID_CONFIG)
     app_collection_mock = create_app_collection(mocker, config_file)
-    categories, apps = repo_config_parser.from_file(app_collection_mock)
+    categories, apps = app_collection_config_parser.from_file(app_collection_mock)
     assert categories == [AppCategory(name=VALID_CATEGORY_NAME)]
-    assert apps == [
-        App(
-            app_collection=app_collection_mock,
-            name=VALID_ITEM_NAME,
-            description=VALID_ITEM_DESCRIPTION,
-            categories=[AppCategory(name=VALID_CATEGORY_NAME)],
-            playbook_path=Path(config_file).parent / Path("playbooks/cowsay.yml"),
-            _ansible_runner=ansible_runner,
-        )
-    ]
+    assert apps == [app_stub]
 
 
 def test_parse_invalid_file(tmpdir, mocker: MockerFixture):
     (
         config_file,
         ansible_runner,
+        app_stub,
         repo_config_parser,
     ) = create_yaml_app_collection_config_parser(mocker, tmpdir, INVALID_CONFIG)
     with pytest.raises(AppCollectionConfigValidationException):

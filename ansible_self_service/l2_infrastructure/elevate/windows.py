@@ -37,8 +37,8 @@ class ShellExecuteInfo(ctypes.Structure):
     ]
 
     def __init__(self, **kw):
-        super(ShellExecuteInfo, self).__init__()
-        self.cbSize = ctypes.sizeof(self)
+        super().__init__()
+        self.cbSize = ctypes.sizeof(self)  # pylint: disable=invalid-name
         for field_name, field_value in kw.items():
             setattr(self, field_name, field_value)
 
@@ -63,7 +63,9 @@ CloseHandle.restype = BOOL
 # At last, the actual implementation!
 
 
-def elevate(show_console=True, graphical=True, with_args=sys.argv):
+def elevate(show_console=True, _=True, with_args=None):
+    if with_args is None:
+        with_args = sys.argv
     if windll.shell32.IsUserAnAdmin():
         return
 
