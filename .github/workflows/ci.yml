@@ -10,6 +10,8 @@ jobs:
         poetry-version: [1.2.2]
         os: [ubuntu-20.04, macos-latest]
         include:
+          - os: ubuntu-20.04
+            path: ~/.cache/pip
           - os: ubuntu-latest
             path: ~/.cache/pip
           - os: macos-latest
